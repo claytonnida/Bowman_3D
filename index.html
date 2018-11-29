@@ -4,7 +4,7 @@
   <title>WebGL Multiplayer Target</title>
   <style>
     body {
-      background-image: url('/Project/images/Top-Header-Grass-Sky-Background-JPG.jpg');
+      background-image: url('images/Top-Header-Grass-Sky-Background-JPG.jpg');
       background-size:100% 100%;
       cursor: crosshair;
       font-family: Georgia, Helvetica, sans-serif;
@@ -70,18 +70,19 @@
     }
   </style>
   <script src="jquery-1.7.2.min.js"></script>
-  <script src="three.js-master/build/three.js"></script>
+
+  <script src="/three.js-master/build/three.js"></script>
   <script src="Three.FirstPersonControls.js"></script>
-  <script src="three.js-master/examples/js/renderers/Projector.js"></script>
+  <script src="/three.js-master/examples/js/renderers/Projector.js"></script>
   <script src="main.js"></script>
-  <script src="three.js-master/examples/js/libs/ammo.js"></script>
-	<script src="three.js-master/examples/js/controls/OrbitControls.js"></script>
-	<script src="three.js-master/examples/js/WebGL.js"></script>
-	<script src="three.js-master/examples/js/libs/stats.min.js"></script>
-	<script src="three.js-master/examples/js/ConvexObjectBreaker.js"></script>
-	<script src="three.js-master/examples/js/QuickHull.js"></script>
-  <script src="three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
-  <script src="three.js-master/examples/js/loaders/STLLoader.js"></script>
+  <script src="/three.js-master/examples/js/libs/ammo.js"></script>
+	<script src="/three.js-master/examples/js/controls/OrbitControls.js"></script>
+	<script src="/three.js-master/examples/js/WebGL.js"></script>
+	<script src="/three.js-master/examples/js/libs/stats.min.js"></script>
+	<script src="/three.js-master/examples/js/ConvexObjectBreaker.js"></script>
+	<script src="/three.js-master/examples/js/QuickHull.js"></script>
+  <script src="/three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
+  <script src="/three.js-master/examples/js/loaders/STLLoader.js"></script>
 </head>
 <body>
 </body>
@@ -585,7 +586,7 @@ function onDocumentMouseDown(e)
 				var ballMass = 10;
 				var ballRadius = 2;
         var ball = new THREE.Mesh( new THREE.SphereBufferGeometry( ballRadius, 14, 10 ), ballMaterial );
-        var arrow = loader.load('../Project/images/Arrow.stl');
+        var arrow = loader.load('images/Arrow.stl');
         console.log(arrow);
         
 				ball.castShadow = true;
