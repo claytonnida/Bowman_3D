@@ -13,8 +13,8 @@ var Player = function(_color, _position, _rotation) {
 
 	// Start with the upper body
 	this.torsoDummy = new THREE.Object3D();
-	this.torsoDummy.position.set(_position.x, _position.y, _position.z);
-	this.torsoDummy.position.set(_rotation.x, _rotation.y, _rotation.z); // Leave order as default (XYZ)
+	this.torsoDummy.position.copy(_position);
+	this.torsoDummy.rotation.copy(_rotation);
 
 	// Initialize upper torso
 	this.torso = new THREE.Mesh(new THREE.CubeGeometry(40, 25, 20), this.material);
@@ -76,11 +76,11 @@ var Player = function(_color, _position, _rotation) {
 
 	// Initialize lower torso and dummy
 	this.lowerTorsoDummy = new THREE.Object3D();
-	this.lowerTorsoDummy.position.set(0,-10,0);
+	// this.lowerTorsoDummy.position.set(0,-10,0);
 	this.torsoDummy.add(this.lowerTorsoDummy);
 
-	this.lowerTorso = new THREE.Mesh(new THREE.CubeGeometry(34, 15, 18), this.material);
-	// this.lowerTorso.position.set(0,-12.5,0);
+	this.lowerTorso = new THREE.Mesh(new THREE.CubeGeometry(28, 18, 18), this.material);
+	this.lowerTorso.position.set(0,-12.5,0);
 	this.lowerTorsoDummy.add(this.lowerTorso);
 
 	// Initialize waist and dummy
@@ -138,10 +138,11 @@ var Player = function(_color, _position, _rotation) {
 	this.rightCalfDummy.add(this.rightFoot);
 };
 
-Player.prototype.setPosition = function(x, y, z) {
-	this.torsoDummy.position.set(x, y, z);
+Player.prototype.setPosition = function(newPos) {
+	this.torsoDummy.position.copy(newPos);
 };
 
-Player.prototype.setRotation = function(x, y, z) {
-	this.torsoDummy.rotation.set(x, y, z); 
+Player.prototype.setRotation = function(newRot) {
+	this.torsoDummy.rotation.copy(newRot); 
 };
+

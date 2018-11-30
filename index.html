@@ -331,13 +331,13 @@ var player2;
 function initTargets() 
 {
 	// Add player one
-	player1 = new Player(0xff0000, new THREE.Vector3(-1000, 168/2, -1000), new THREE.Euler(0, 0, 0));
+	player1 = new Player(0xff0000, new THREE.Vector3(1000, 168/2, 1000), new THREE.Euler(0, 1.5708 * 2, 0));
 
 	targets.push(player1.torso);
 	scene.add(player1.torsoDummy);
 
 	// Add player two
-	player2 = new Player(0x0000ff, new THREE.Vector3(1000, 168/2, 1000), new THREE.Euler(0, 0, 0));
+	player2 = new Player(0x0000ff, new THREE.Vector3(-1000, 168/2, -1000), new THREE.Euler(0, 0, 0));
 
 	targets.push(player2.torso);
 	scene.add(player2.torsoDummy);
@@ -369,7 +369,6 @@ function checkWallCollision(v)
 	var c = getMapSector(v);
 	return map[c.x][c.z] > 0;
 }
-
 
 
 var bullets = [];
