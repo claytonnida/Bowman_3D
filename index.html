@@ -401,7 +401,7 @@ function setupScene()
 	scene.add(floor);
 	
 	var loader = new THREE.PLYLoader();
-				loader.load( '/three.js-master/examples/models/ply/ascii/wind.ply', function ( geometry ) {
+				loader.load( '/models/wind.ply', function ( geometry ) {
 					geometry.computeVertexNormals();
 					var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
 					var mesh = new THREE.Mesh( geometry, material );
@@ -419,7 +419,7 @@ function setupScene()
 					scene.add( mesh );
 				} );
 	var loader = new THREE.PLYLoader();
-				loader.load( '/three.js-master/examples/models/ply/ascii/wind.ply', function ( geometry ) {
+				loader.load( '/models/wind.ply', function ( geometry ) {
 					geometry.computeVertexNormals();
 					var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
 					var mesh2 = new THREE.Mesh( geometry, material );
@@ -619,7 +619,7 @@ function onDocumentMouseUp(e)
 				var ballMass = 1;
 				var ballRadius = 2;
         var ball = new THREE.Mesh( new THREE.SphereBufferGeometry( ballRadius, 14, 10 ), ballMaterial );
-        var arrow = loader.load('/images/Arrow.stl');
+        var arrow = loader.load('/models/Arrow.stl');
              
 				ball.castShadow = true;
 				ball.receiveShadow = true;
