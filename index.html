@@ -34,15 +34,15 @@
 
 // Initalize the map where '1' represents a "wall".
 var map = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1,],
-			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-			  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,]];
+		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+		  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,]];
 var mapW = map.length;
 var mapH = map[0].length;
 
@@ -66,6 +66,14 @@ var mouseCoords = new THREE.Vector2();
 var raycaster = new THREE.Raycaster();
 var ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } );
 var loader = new THREE.STLLoader();
+var mousedownID = -1;
+var pow = .1;
+
+// Holds the Player objects for our game.
+var players = [];
+
+var player1;
+var player2;
 
 // Physics variables
 var collisionConfiguration;
@@ -174,12 +182,8 @@ function init()
 }
 
 // Helper function for browser frames
-function animate() 
-{
-	if (runAnim) 
-	{
-		requestAnimationFrame(animate);
-	}
+function animate() {
+	if (runAnim) {	requestAnimationFrame(animate); }
 	render();
 }
 
@@ -191,69 +195,26 @@ function render()
 
 	controls.update(delta); // Move camera
 	updatePhysics( speed );
-	
-	// Update bullets. Walk backwards through the list so we can remove items.
-	for (var i = bullets.length-1; i >= 0; i--) 
-	{
-		var b = bullets[i], p = b.position, d = b.ray.direction;
-		if (checkWallCollision(p)) 
-		{
-			bullets.splice(i, 1);
-			scene.remove(b);
-			continue;
-		}
-		// Collide with AI
-		var hit = false;
-		for (var j = targets.length-1; j >= 0; j--) 
-		{
-			var curPlayer = targets[j];
-			var v = curPlayer.torso.geometry.vertices[0];
-			var c = curPlayer.torso.position;
-			var x = Math.abs(v.x), z = Math.abs(v.z);
-			//console.log(Math.round(p.x), Math.round(p.z), c.x, c.z, x, z);
-			if (p.x < c.x + x && p.x > c.x - x &&
-					p.z < c.z + z && p.z > c.z - z &&
-					b.owner != a) 
-					{
-				bullets.splice(i, 1);
-				scene.remove(b);
-				curPlayer.health -= PROJECTILE_DAMAGE;
-				var color = curPlayer.torso.material.color, percent = curPlayer.health / 100;
-				curPlayer.torso.material.color.setRGB(
-						percent * color.r,
-						percent * color.g,
-						percent * color.b
-				);
-				hit = true;
-				break;
-			}
-		}
-		b.translateX(speed * d.x);
-		b.translateZ(speed * d.z);
-	}
+
 	renderer.autoClear = false;
 	renderer.clear();
 	renderer.render(backgroundScene, backgroundCamera)
 	renderer.render(scene, cam); // Repaint
 	time += delta;
-	//console.log(cam.rotation.y);
 }
 
 // Set up the objects in the world
 function setupScene() 
 {
 	// Initialize the floor
-
 	var floorGeo = new THREE.CubeGeometry(mapW * UNIT_SIZE, 10, mapW * UNIT_SIZE);
 	floorGeo.computeVertexNormals();
 	floorGeo.computeFaceNormals();
 	
 	var floor = new THREE.Mesh(floorGeo, new THREE.MeshLambertMaterial({color: 0xEDCBA0}));
 	scene.add(floor);
-	
 
 	// Lighting
-
 	var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
 	directionalLight1.position.set( .5, .9, .5);
 	directionalLight1.castShadow = true;
@@ -263,7 +224,6 @@ function setupScene()
 	directionalLight2.position.set( -.5, .9, -.5);
 	directionalLight2.castShadow = true;
 	scene.add( directionalLight2 );
-	
 
 	// Background
 
@@ -284,99 +244,35 @@ function setupScene()
 	backgroundScene.add(backgroundMesh);
 }
 
-var targets = [];
-
-// Holds the Player objects for our game.
-var player1;
-var player2;
-
 function initTargets() 
 {
 	// Add player one
 	player1 = new Player(0xff0000, new THREE.Vector3(1000, 168/2, 1000), new THREE.Euler(0, 1.5708 * 2, 0));
 
-	targets.push(player1.torso);
+	players.push(player1.torso);
 	scene.add(player1.torsoDummy);
 
 	// Add player two
 	player2 = new Player(0x0000ff, new THREE.Vector3(-1000, 168/2, -1000), new THREE.Euler(0, 0, 0));
 
-	targets.push(player2.torso);
+	players.push(player2.torso);
 	scene.add(player2.torsoDummy);
 }
 
-function distance(x1, y1, x2, y2) 
-{
-	return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
-}
+function distance(x1, y1, x2, y2) { return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));}
 
-function getMapSector(v) 
-{
+function getMapSector(v) {
 	var x = Math.floor((v.x + UNIT_SIZE / 2) / UNIT_SIZE + mapW/2);
 	var z = Math.floor((v.z + UNIT_SIZE / 2) / UNIT_SIZE + mapW/2);
 	return {x: x, z: z};
 }
 
-/**
- * Check whether a Vector3 overlaps with a wall.
- *
- * @param v
- *   A THREE.Vector3 object representing a point in space.
- *   Passing cam.position is especially useful.
- * @returns {Boolean}
- *   true if the vector is inside a wall; false otherwise.
- */
-function checkWallCollision(v)
-{
+function checkWallCollision(v) {
 	var c = getMapSector(v);
 	return map[c.x][c.z] > 0;
 }
 
-
-var bullets = [];
-var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x333333});
-var sphereGeo = new THREE.SphereGeometry(.5, .5, 100);
-var Material = new THREE.MeshLambertMaterial({color : 0xfb0000});
-Material.side = THREE.DoubleSide;
-function createBullet(obj) 
-{
-	if (obj === undefined) 
-	{
-		obj = cam;
-	}
-	var sphere = new THREE.Mesh(sphereGeo, sphereMaterial);
-	sphere.position.set(obj.position.x, obj.position.y * 0.8, obj.position.z);
-
-	if (obj instanceof THREE.Camera) 
-	{
-		var vector = new THREE.Vector3(mouse.x, mouse.y, 1);
-		//projector.unprojectVector(vector, obj);
-		vector.unproject(obj);
-		sphere.ray = new THREE.Ray(
-				obj.position,
-				vector.sub(obj.position).normalize()
-		);
-	}
-	else 
-	{
-		var vector = cam.position.clone();
-		sphere.ray = new THREE.Ray(
-				obj.position,
-				vector.subSelf(obj.position).normalize()
-		);
-	}
-	sphere.owner = obj;
-	
-	bullets.push(sphere);
-	scene.add(sphere);
-	
-	return sphere;
-}
-
-var mousedownID = -1;
-var pow = .1;
-function onDocumentMouseDown(e)
-{
+function onDocumentMouseDown(e) {
 	// Reset the power and arrow speed.
 	pow = .1;
 	ARROW_SPEED = 1;
@@ -389,8 +285,8 @@ function onDocumentMouseDown(e)
 	}  
 	 
 }
-function whileMouseDown()
-{
+
+function whileMouseDown() {
 	// While holding mouse down, increase arrow power.
 	ARROW_SPEED += 1;
 
@@ -417,35 +313,42 @@ function whileMouseDown()
 	$('.power-bar').css({value: newValue,});
 }
 
-function onDocumentMouseUp(e)
-{
+function onDocumentMouseUp(e) {
 	if(mousedownID!=-1) 
 	{  //Only stop if exists
 	  clearInterval(mousedownID);
 	  mousedownID=-1;
 	}
-  mouseCoords.set(
-					( event.clientX / window.innerWidth ) * 2 - 1,
-					- ( event.clientY / window.innerHeight ) * 2 + 1
-				);
-				raycaster.setFromCamera( mouseCoords, cam );
-				// Creates a ball and throws it
-				var ballMass = 1;
-				var ballRadius = 2;
-		  var ball = new THREE.Mesh( new THREE.SphereBufferGeometry( ballRadius, 14, 10 ), ballMaterial );
-		  var arrow = loader.load('/models/Arrow.stl');
+  	
+  	mouseCoords.set(
+		 ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
+		-( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
+	);
+	
+	raycaster.setFromCamera( mouseCoords, cam );
+	
+	// Creates a ball and throws it
+	var ballMass = 1;
+	var ballRadius = 2;
+	var ball = new THREE.Mesh( new THREE.SphereBufferGeometry( ballRadius, 14, 10 ), ballMaterial );
+	var arrow = loader.load('/models/Arrow.stl');
 				 
-				ball.castShadow = true;
-				ball.receiveShadow = true;
-				var ballShape = new Ammo.btSphereShape( ballRadius );
-				ballShape.setMargin( margin );
-				pos.copy( raycaster.ray.direction );
-				pos.add( raycaster.ray.origin );
-				quat.set( 0, 0, 0, 1 );
-				var ballBody = createRigidBody( ball, ballShape, ballMass, pos, quat );
-				pos.copy( raycaster.ray.direction );
-				pos.multiplyScalar( 24 );
-				ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+	ball.castShadow = true;
+	ball.receiveShadow = true;
+
+	var ballShape = new Ammo.btSphereShape( ballRadius );
+	ballShape.setMargin( margin );
+	
+	pos.copy( raycaster.ray.direction );
+	pos.add( raycaster.ray.origin );
+	
+	quat.set( 0, 0, 0, 1 );
+	
+	var ballBody = createRigidBody( ball, ballShape, ballMass, pos, quat );
+	pos.copy( raycaster.ray.direction );
+	pos.multiplyScalar( 24 );
+	
+	ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
 }
 
 
@@ -454,129 +357,114 @@ $(window).resize(function()
 {
 	WIDTH = window.innerWidth;
 	HEIGHT = window.innerHeight;
+	
 	ASPECT_RATIO = WIDTH / HEIGHT;
-	if (cam) 
-	{
+	
+	if (cam) {
 		cam.aspect = ASPECT_RATIO;
 		cam.updateProjectionMatrix();
 	}
-	if (renderer) 
-	{
+
+	if (renderer) {
 		renderer.setSize(WIDTH, HEIGHT);
 	}
+	
 	$('#intro, #hurt').css({width: WIDTH, height: HEIGHT,});
 });
 
 // Stop moving around when the window is unfocused (keeps my sanity!)
-$(window).focus(function() 
-{
-	if (controls) controls.freeze = false;
+$(window).focus(function() {
+	if (controls) controls.freeze = false; 
 });
-$(window).blur(function() 
-{
+$(window).blur(function() {
 	if (controls) controls.freeze = true;
 });
-
-//Get a random integer between lo and hi, inclusive.
-//Assumes lo and hi are integers and lo is lower than hi.
-function getRandBetween(lo, hi)
-{
- return parseInt(Math.floor(Math.random()*(hi-lo+1))+lo, 10);
-}
-
 	
-function removeDebris( object ) 
-{
+function removeDebris(object) {
 	scene.remove( object );
 	physicsWorld.removeRigidBody( object.userData.physicsBody );
 }
-function createConvexHullPhysicsShape( coords ) 
-{
-	var shape = new Ammo.btConvexHullShape();
-	for ( var i = 0, il = coords.length; i < il; i+= 3 ) 
-	{
-		tempBtVec3_1.setValue( coords[ i ], coords[ i + 1 ], coords[ i + 2 ] );
-		var lastOne = ( i >= ( il - 3 ) );
-		shape.addPoint( tempBtVec3_1, lastOne );
-	}
-	return shape;
-}
+
 
 function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel ) 
 {
-	if ( pos ) 
-	{
+	if (pos) {
 		object.position.copy( pos );
-	}
-	else 
-	{
+	} else {
 		pos = object.position;
 	}
-	if ( quat ) 
-	{
+
+	if (quat) {
 		object.quaternion.copy( quat );
-	}
-	else 
-	{
+	} else {
 		quat = object.quaternion;
 	}
+	
 	var transform = new Ammo.btTransform();
+
 	transform.setIdentity();
 	transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
 	transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+	
 	var motionState = new Ammo.btDefaultMotionState( transform );
 	var localInertia = new Ammo.btVector3( 0, 0, 0 );
+	
 	physicsShape.calculateLocalInertia( mass, localInertia );
+	
 	var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, physicsShape, localInertia );
 	var body = new Ammo.btRigidBody( rbInfo );
+	
 	body.setFriction( 0.5 );
-	if ( vel ) 
-	{
+
+	if ( vel ) {
 		body.setLinearVelocity( new Ammo.btVector3( vel.x, vel.y, vel.z ) );
 	}
-	if ( angVel ) 
-	{
+	
+	if ( angVel ) {
 		body.setAngularVelocity( new Ammo.btVector3( angVel.x, angVel.y, angVel.z ) );
 	}
+	
 	object.userData.physicsBody = body;
 	object.userData.collided = false;
 	scene.add( object );
-	if ( mass > 0 )
-	{
+	
+	if ( mass > 0 ) {
 		rigidBodies.push( object );
-		// Disable deactivation
-		body.setActivationState( 4 );
+		body.setActivationState( 4 ); // Disable deactivation
 	}
+
 	physicsWorld.addRigidBody( body );
+	
 	return body;
 }
 
-	function initPhysics()
-	 {
-		// Physics configuration
-		collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-		dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
-		broadphase = new Ammo.btDbvtBroadphase();
-		solver = new Ammo.btSequentialImpulseConstraintSolver();
-		physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-		physicsWorld.setGravity( new Ammo.btVector3((2*Math.PI), - GRAVITY, (2*Math.PI)));
-		
-	}
+function initPhysics() {
+	// Physics configuration
+	collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+	
+	dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+	broadphase = new Ammo.btDbvtBroadphase();
+	solver = new Ammo.btSequentialImpulseConstraintSolver();
+	
+	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
+	physicsWorld.setGravity( new Ammo.btVector3((2*Math.PI), - GRAVITY, (2*Math.PI)));
+}
 
 function updatePhysics( deltaTime ) 
 {
-	
 	// Step world
 	physicsWorld.stepSimulation( deltaTime, 10 );
+	
 	// Update rigid bodies
-	for ( var i = 0, il = rigidBodies.length; i < il; i++ ) 
-	{
+	for ( var i = 0, il = rigidBodies.length; i < il; i++ ) {
 		var objThree = rigidBodies[ i ];
 		var objPhys = objThree.userData.physicsBody;
+
 		var ms = objPhys.getMotionState();
-		if ( ms ) 
-		{
+		
+		if ( ms ) {
 			ms.getWorldTransform( transformAux1 );
+			
 			var p = transformAux1.getOrigin();
 			var q = transformAux1.getRotation();
 			
@@ -586,95 +474,110 @@ function updatePhysics( deltaTime )
 			objThree.userData.collided = false;
 		}
 	}
-	for ( var i = 0, il = dispatcher.getNumManifolds(); i < il; i ++ ) 
-	{
+
+	for ( var i = 0, il = dispatcher.getNumManifolds(); i < il; i ++ ) {
+		
 		var contactManifold = dispatcher.getManifoldByIndexInternal( i );
+		
 		var rb0 = contactManifold.getBody0();
 		var rb1 = contactManifold.getBody1();
+		
 		var threeObject0 = Ammo.castObject( rb0.getUserPointer(), Ammo.btVector3 ).threeObject;
 		var threeObject1 = Ammo.castObject( rb1.getUserPointer(), Ammo.btVector3 ).threeObject;
+		
 		if ( ! threeObject0 && ! threeObject1 ) 
 		{
 			continue;
 		}
+		
 		var userData0 = threeObject0 ? threeObject0.userData : null;
 		var userData1 = threeObject1 ? threeObject1.userData : null;
+		
 		var breakable0 = userData0 ? userData0.breakable : false;
 		var breakable1 = userData1 ? userData1.breakable : false;
+		
 		var collided0 = userData0 ? userData0.collided : false;
 		var collided1 = userData1 ? userData1.collided : false;
-		if ( ( ! breakable0 && ! breakable1 ) || ( collided0 && collided1 ) ) 
-		{
+		
+		if ( ( ! breakable0 && ! breakable1 ) || ( collided0 && collided1 ) ) {
 			continue;
 		}
+
 		var contact = false;
 		var maxImpulse = 0;
-		for ( var j = 0, jl = contactManifold.getNumContacts(); j < jl; j ++ ) 
-		{
+		
+		for ( var j = 0, jl = contactManifold.getNumContacts(); j < jl; j ++ ) {
 			var contactPoint = contactManifold.getContactPoint( j );
-			if ( contactPoint.getDistance() < 0 ) 
-			{
+			
+			if ( contactPoint.getDistance() < 0 ) {
 				contact = true;
+				
 				var impulse = contactPoint.getAppliedImpulse();
-				if ( impulse > maxImpulse ) 
-				{
+				
+				if ( impulse > maxImpulse ) {
 					maxImpulse = impulse;
+					
 					var pos = contactPoint.get_m_positionWorldOnB();
 					var normal = contactPoint.get_m_normalWorldOnB();
+					
 					impactPoint.set( pos.x(), pos.y(), pos.z() );
 					impactNormal.set( normal.x(), normal.y(), normal.z() );
 				}
+
 				break;
 			}
 		}
+
 		// If no point has contact, abort
-		if ( ! contact ) 
-		{
-			continue;
-		}
+		if (!contact) continue;
+
 		// Subdivision
 		var fractureImpulse = 250;
-		if ( breakable0 && !collided0 && maxImpulse > fractureImpulse ) 
-		{
+		
+		if ( breakable0 && !collided0 && maxImpulse > fractureImpulse ) {
 			var debris = convexBreaker.subdivideByImpact( threeObject0, impactPoint, impactNormal , 1, 2, 1.5 );
+			
 			var numObjects = debris.length;
-			for ( var j = 0; j < numObjects; j++ ) 
-			{
+			for ( var j = 0; j < numObjects; j++ ) {
 				createDebrisFromBreakableObject( debris[ j ] );
 			}
+
 			objectsToRemove[ numObjectsToRemove++ ] = threeObject0;
+			
 			userData0.collided = true;
 		}
-		if ( breakable1 && !collided1 && maxImpulse > fractureImpulse ) 
-		{
+		
+		if ( breakable1 && !collided1 && maxImpulse > fractureImpulse ) {
 			var debris = convexBreaker.subdivideByImpact( threeObject1, impactPoint, impactNormal , 1, 2, 1.5 );
+			
 			var numObjects = debris.length;
 			for ( var j = 0; j < numObjects; j++ ) 
 			{
 				createDebrisFromBreakableObject( debris[ j ] );
 			}
+			
 			objectsToRemove[ numObjectsToRemove++ ] = threeObject1;
+			
 			userData1.collided = true;
 		}
 	}
-	for ( var i = 0; i < numObjectsToRemove; i++ ) 
-	{
+
+	for ( var i = 0; i < numObjectsToRemove; i++ ) {
 		removeDebris( objectsToRemove[ i ] );
 	}
+
 	numObjectsToRemove = 0;
 }
-function createRandomColor() 
-{
+function createRandomColor() {
 	return Math.floor( Math.random() * ( 1 << 24 ) );
 }
-function createMaterial( color ) 
-{
+
+function createMaterial( color ) {
 	color = color || createRandomColor();
 	return new THREE.MeshPhongMaterial( { color: color } );
 }
 
-function getRandomArbitrary(min, max) 
-{
+function getRandomArbitrary(min, max) {
 	return Math.random() * (max - min) + min;
 }
 </script>
