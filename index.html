@@ -1,42 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>WebGL Multiplayer Target</title>
-  <link rel="stylesheet" type="text/css" href="index_style.css">
-  <script src="jquery-1.7.2.min.js"></script>
+	<title>WebGL Multiplayer Target</title>
 
-  <script src="/three.js-master/build/three.js"></script>
-  <script src="Three.FirstPersonControls.js"></script>
-  <script src="/three.js-master/examples/js/renderers/Projector.js"></script>
-  <script src="/Player.js"></script>
-  <!-- <script src="main.js"></script> -->
-  <script src="/three.js-master/examples/js/libs/ammo.js"></script>
-	<script src="/three.js-master/examples/js/controls/OrbitControls.js"></script>
-	<script src="/three.js-master/examples/js/WebGL.js"></script>
-	<script src="/three.js-master/examples/js/libs/stats.min.js"></script>
-	<script src="/three.js-master/examples/js/ConvexObjectBreaker.js"></script>
-	<script src="/three.js-master/examples/js/QuickHull.js"></script>
-  <script src="/three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
-  <script src="/three.js-master/examples/js/loaders/STLLoader.js"></script>
-  <script src="/three.js-master/examples/js/loaders/PLYLoader.js"></script>
-  <script src="/three.js-master/src/loaders/TextureLoader.js"></script>
+	<link rel="stylesheet" type="text/css" href="index_style.css">
+	
+	<script src="jquery-1.7.2.min.js"></script>
 
+	<script src="three.js-master/build/three.js"></script>
+
+	<script src="three.js-master/examples/js/renderers/Projector.js"></script>
+	<script src="three.js-master/examples/js/libs/ammo.js"></script>
+	<script src="three.js-master/examples/js/libs/stats.min.js"></script>
+	<script src="three.js-master/examples/js/controls/OrbitControls.js"></script>
+	<script src="three.js-master/examples/js/WebGL.js"></script>
+	<script src="three.js-master/examples/js/ConvexObjectBreaker.js"></script>
+	<script src="three.js-master/examples/js/QuickHull.js"></script>
+	<script src="three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
+	<script src="three.js-master/examples/js/loaders/STLLoader.js"></script>
+	<script src="three.js-master/examples/js/loaders/PLYLoader.js"></script>
+	
+	<script src="three.js-master/src/loaders/TextureLoader.js"></script>
+
+	<script src="Three.FirstPersonControls.js"></script>
+
+	<script src="Player.js"></script>
 </head>
+
 <body>
 </body>
+
 <script>
 
 // Initalize the map where '1' represents a "wall".
 var map = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1,],
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,]];
+			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+			  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+			  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,]];
 var mapW = map.length;
 var mapH = map[0].length;
 
@@ -97,8 +103,8 @@ $(document).ready(function()
 	{
 		e.preventDefault();
 		$(this).fadeOut();
-  	    init();
-  	    initPhysics();
+		 init();
+		 initPhysics();
 		//setInterval(drawWind, 1000);
 		animate();
 	});
@@ -154,7 +160,7 @@ function init()
 	document.body.appendChild(renderer.domElement);
 	
 	// Track mouse position so we know where to shoot
-  	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	document.addEventListener('mouseup', onDocumentMouseUp, false);
 	
 	// Display HUD
@@ -180,8 +186,8 @@ function animate()
 // Update and display
 function render() 
 {
-  	var delta = clock.getDelta();
-  	var speed = delta * BULLET_SPEED;
+	var delta = clock.getDelta();
+	var speed = delta * BULLET_SPEED;
 
 	controls.update(delta); // Move camera
 	updatePhysics( speed );
@@ -224,7 +230,7 @@ function render()
 		}
 		b.translateX(speed * d.x);
 		b.translateZ(speed * d.z);
-  	}
+	}
 	renderer.autoClear = false;
 	renderer.clear();
 	renderer.render(backgroundScene, backgroundCamera)
@@ -381,7 +387,7 @@ function onDocumentMouseDown(e)
 	{
 		mousedownID = setInterval(whileMouseDown, 100 /*execute every 100ms*/);
 	}  
-    
+	 
 }
 function whileMouseDown()
 {
@@ -395,18 +401,18 @@ function whileMouseDown()
 	var total = $('.power-bar').data('total');
 	
 	// Update the value based on power.
-    var newValue = pow;
+	 var newValue = pow;
 	pow += .01;
 	var barWidth = (newValue / total) * 100;
 	if(pow *100 < 100)
 	{
 		var hitWidth = (pow) * 100 + "%";
 	}
-    else
+	 else
 	{
 		var hitWidth = 100 + "%";
 	}
-    // Update the data of the CSS.
+	 // Update the data of the CSS.
 	$('.power').css({width: hitWidth,});
 	$('.power-bar').css({value: newValue,});
 }
@@ -415,9 +421,9 @@ function onDocumentMouseUp(e)
 {
 	if(mousedownID!=-1) 
 	{  //Only stop if exists
-     clearInterval(mousedownID);
-     mousedownID=-1;
-   }
+	  clearInterval(mousedownID);
+	  mousedownID=-1;
+	}
   mouseCoords.set(
 					( event.clientX / window.innerWidth ) * 2 - 1,
 					- ( event.clientY / window.innerHeight ) * 2 + 1
@@ -426,9 +432,9 @@ function onDocumentMouseUp(e)
 				// Creates a ball and throws it
 				var ballMass = 1;
 				var ballRadius = 2;
-        var ball = new THREE.Mesh( new THREE.SphereBufferGeometry( ballRadius, 14, 10 ), ballMaterial );
-        var arrow = loader.load('/models/Arrow.stl');
-             
+		  var ball = new THREE.Mesh( new THREE.SphereBufferGeometry( ballRadius, 14, 10 ), ballMaterial );
+		  var arrow = loader.load('/models/Arrow.stl');
+				 
 				ball.castShadow = true;
 				ball.receiveShadow = true;
 				var ballShape = new Ammo.btSphereShape( ballRadius );
@@ -669,7 +675,7 @@ function createMaterial( color )
 
 function getRandomArbitrary(min, max) 
 {
-  	return Math.random() * (max - min) + min;
+	return Math.random() * (max - min) + min;
 }
 </script>
 </html>
