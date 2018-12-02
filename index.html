@@ -82,6 +82,7 @@ var broadphase;
 var solver;
 var physicsWorld;
 var margin = 0.05;
+var wind;
 
 var rigidBodies = [];
 var pos = new THREE.Vector3();
@@ -112,6 +113,7 @@ $(document).ready(function()
 		e.preventDefault();
 		$(this).fadeOut();
 		 init();
+		 initWind();
 		 initPhysics();
 		//setInterval(drawWind, 1000);
 		animate();
@@ -214,6 +216,42 @@ function setupScene()
 	var floor = new THREE.Mesh(floorGeo, new THREE.MeshLambertMaterial({color: 0xEDCBA0}));
 	scene.add(floor);
 
+	var loader = new THREE.PLYLoader();
+				loader.load( 'models/wind.ply', function ( geometry ) {
+					geometry.computeVertexNormals();
+					var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
+					var mesh = new THREE.Mesh( geometry, material );
+					mesh.position.y = 75;
+					mesh.position.x = 100;
+					mesh.position.z = -900;
+					mesh.rotation.x = - Math.PI / 2;
+					let angle = Math.atan2(wind.z,-wind.x);
+					mesh.rotation.z = angle;
+					mesh.rotation.z += (1.5708*2); 
+					mesh.scale.multiplyScalar( .1 );
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+					scene.add( mesh );
+				} );
+
+	var loader = new THREE.PLYLoader();
+				loader.load( 'models/wind.ply', function ( geometry ) {
+					geometry.computeVertexNormals();
+					var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
+					var mesh2 = new THREE.Mesh( geometry, material );
+					mesh2.position.y = 75;
+					mesh2.position.x = -100;
+					mesh2.position.z = 900;
+					mesh2.rotation.x = - Math.PI / 2;
+					let angle = Math.atan2(wind.z,-wind.x);
+					mesh2.rotation.z = angle;
+					mesh2.rotation.z += (1.5708*2); 
+					mesh2.scale.multiplyScalar( .1 );
+					mesh2.castShadow = true;
+					mesh2.receiveShadow = true;
+					scene.add( mesh2 );
+				} );
+
 	// Lighting
 	var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
 	directionalLight1.position.set( .5, .9, .5);
@@ -247,13 +285,13 @@ function setupScene()
 function initTargets() 
 {
 	// Add player one
-	player1 = new Player(0xff0000, new THREE.Vector3(1000, 168/2, 1000), new THREE.Euler(0, 1.5708 * 2, 0));
+	player1 = new Player(0xff0000, new THREE.Vector3(0, 168/2, -1125), new THREE.Euler(0, 0, 0));
 
 	players.push(player1.torso);
 	scene.add(player1.torsoDummy);
 
 	// Add player two
-	player2 = new Player(0x0000ff, new THREE.Vector3(-1000, 168/2, -1000), new THREE.Euler(0, 0, 0));
+	player2 = new Player(0x0000ff, new THREE.Vector3(0, 168/2, 1125), new THREE.Euler(0, 1.5708 * 2, 0));
 
 	players.push(player2.torso);
 	scene.add(player2.torsoDummy);
@@ -275,49 +313,48 @@ function checkWallCollision(v) {
 function onDocumentMouseDown(e) {
 	// Reset the power and arrow speed.
 	pow = .1;
-	ARROW_SPEED = 1;
+	ARROWSPEED = 1;
 	$('.power').css({width: 0+"%",});
 	$('.power-bar').css({value: 0,});
 	// Prevent infinite loop.
-	if(mousedownID == -1)
-	{
+	if(mousedownID == -1) {
 		mousedownID = setInterval(whileMouseDown, 100 /*execute every 100ms*/);
 	}  
-	 
 }
 
 function whileMouseDown() {
 	// While holding mouse down, increase arrow power.
-	ARROW_SPEED += 1;
-
-	physicsWorld.setGravity( new Ammo.btVector3(0, -GRAVITY/100, 0) );
+	ARROWSPEED += 1;
+	// TODO working on changing the velocity based on which player we are.
+	if(wind.z > 0)
+	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/50, wind.z*ARROWSPEED/(2*Math.PI)) );
+	else
+	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/50, wind.z*-ARROWSPEED/(2*Math.PI)) );
 
 	// Grab CSS of the power bar.
 	var value = $('.power-bar').data('value');
 	var total = $('.power-bar').data('total');
 	
 	// Update the value based on power.
-	 var newValue = pow;
+    var newValue = pow;
 	pow += .01;
 	var barWidth = (newValue / total) * 100;
-	if(pow *100 < 100)
-	{
+	if(pow * 100 < 100) {
 		var hitWidth = (pow) * 100 + "%";
 	}
-	 else
-	{
+    else {
 		var hitWidth = 100 + "%";
 	}
-	 // Update the data of the CSS.
+    // Update the data of the CSS.
 	$('.power').css({width: hitWidth,});
 	$('.power-bar').css({value: newValue,});
 }
 
 function onDocumentMouseUp(e) {
-	if(mousedownID!=-1) 
+	if(mousedownID != -1) 
 	{  //Only stop if exists
 	  clearInterval(mousedownID);
-	  mousedownID=-1;
+	  mousedownID = -1;
 	}
   	
   	mouseCoords.set(
@@ -447,7 +484,7 @@ function initPhysics() {
 	solver = new Ammo.btSequentialImpulseConstraintSolver();
 	
 	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-	physicsWorld.setGravity( new Ammo.btVector3((2*Math.PI), - GRAVITY, (2*Math.PI)));
+	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), -GRAVITY/50, wind.z/(2*Math.PI)) );
 }
 
 function updatePhysics( deltaTime ) 
@@ -568,6 +605,12 @@ function updatePhysics( deltaTime )
 
 	numObjectsToRemove = 0;
 }
+
+function initWind() {
+	wind = new THREE.Vector3(getRandomArbitrary(-2*Math.PI, 2*Math.PI), 1, getRandomArbitrary(-2*Math.PI, 2*Math.PI));
+	//console.log(wind.x,wind.y,wind.z);
+}
+
 function createRandomColor() {
 	return Math.floor( Math.random() * ( 1 << 24 ) );
 }
