@@ -21,7 +21,6 @@
 	<script src="three.js-master/examples/js/loaders/PLYLoader.js"></script>
 	
 	<script src="three.js-master/src/loaders/TextureLoader.js"></script>
-
 	<script src="Three.FirstPersonControls.js"></script>
 
 	<script src="Player.js"></script>
@@ -58,7 +57,7 @@ var GRAVITY = 9.81;
 
 // Global vars
 var scene, cam, backgroundScene, backgroundCamera, renderer, controls, clock, projector, model, skin;
-var runAnim = true
+var runAnim = true;
 var mouseCoords = new THREE.Vector2();
 var container, stats;
 var textureLoader;
@@ -339,6 +338,7 @@ function whileMouseDown() {
     var newValue = pow;
 	pow += .01;
 	var barWidth = (newValue / total) * 100;
+  
 	if(pow * 100 < 100) {
 		var hitWidth = (pow) * 100 + "%";
 	}
