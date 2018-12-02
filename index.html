@@ -122,15 +122,6 @@
       margin: 0;
       padding: 5px;
     }
-    #wind 
-	{
-      background-color: #EEEEEE;
-      border: 1px solid black;
-      bottom: 560px;
-      left: 1150px;
-      position: absolute;
-      z-index: 100;
-    }
     #intro 
 	{
       background-color: #000000;
@@ -170,42 +161,40 @@
   <script src="/three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
   <script src="/three.js-master/examples/js/loaders/STLLoader.js"></script>
   <script src="/three.js-master/examples/js/loaders/PLYLoader.js"></script>
+  <script src="/three.js-master/src/loaders/TextureLoader.js"></script>
 
 </head>
 <body>
 </body>
 <script>
-var map = [ // 1  0  3  4  5  6  7  8  9
-           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,], // 0
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], // 1
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], // 0
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], // 3
-           [1, 0, 0, 0, 0, 1, 0, 0, 0, 1,], // 4
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], // 5
-           [1, 0, 0, 0, 0, 1, 0, 0, 0, 1,], // 6
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], // 7
-           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], // 8
-           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,], // 9
-           ], mapW = map.length, mapH = map[0].length;
+
+// Initalize the map where '1' represents a "wall".
+var map = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1,],
+           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
+           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,]];
+var mapW = map.length;
+var mapH = map[0].length;
 
 // Semi-constants
-var WIDTH = window.innerWidth,
-	HEIGHT = window.innerHeight,
-	ASPECT = WIDTH / HEIGHT,
-	UNITSIZE = 250,
-	WALLHEIGHT = UNITSIZE / 3,
-	MOVESPEED = 100,
-	LOOKSPEED = 0.075,
-	BULLETMOVESPEED = 500,
-	NUMTARGETS = 5,
-	PROJECTILEDAMAGE = 20;
-	ARROWSPEED = 1;
+var WIDTH = window.innerWidth;
+var HEIGHT = window.innerHeight;
+var ASPECT_RATIO = WIDTH / HEIGHT;
+var UNIT_SIZE = 250;
+var BULLET_SPEED = 500;
+var PROJECTILE_DAMAGE = 20;
+var ARROW_SPEED = 1;
+var GRAVITY = 9.81;
 
 // Global vars
 var scene, cam, backgroundScene, backgroundCamera, renderer, controls, clock, projector, model, skin;
-var runAnim = true, kills = 0;
-var healthCube, lastHealthPickup = 0;
-var gravityConstant = 9.8;
+var runAnim = true
 var mouseCoords = new THREE.Vector2();
 var container, stats;
 var textureLoader;
@@ -213,9 +202,6 @@ var mouseCoords = new THREE.Vector2();
 var raycaster = new THREE.Raycaster();
 var ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } );
 var loader = new THREE.STLLoader();
-var wind;
-var windDir;
-var rooster;
 
 // Physics variables
 var collisionConfiguration;
@@ -224,7 +210,7 @@ var broadphase;
 var solver;
 var physicsWorld;
 var margin = 0.05;
-//var convexBreaker = new THREE.ConvexObjectBreaker();
+
 var rigidBodies = [];
 var pos = new THREE.Vector3();
 var quat = new THREE.Quaternion();
@@ -239,11 +225,12 @@ for ( var i = 0; i < 500; i++ )
 var numObjectsToRemove = 0;
 var impactPoint = new THREE.Vector3();
 var impactNormal = new THREE.Vector3();
-var hBar = $('.health-bar'),
-      bar = hBar.find('.bar'),
-      hit = hBar.find('.hit');
+var hBar = $('.health-bar');
+var bar = hBar.find('.bar');
+var hit = hBar.find('.hit');
 var pBar = $('.power-bar'),
 power = pBar.find('.power');
+
 // Initialize and run on document ready
 $(document).ready(function() 
 {
@@ -262,19 +249,17 @@ $(document).ready(function()
 // Setup
 function init() 
 {
-	initWind();
 	clock = new THREE.Clock(); // Used in render() for controls.update()
 	projector = new THREE.Projector(); // Used in bullet projection
 	scene = new THREE.Scene(); // Holds all objects in the canvas
 	//scene.fog = new THREE.FogExp2(0xD6F1FF, 0.0005); // color, density
 	
 	// Set up camera
-	cam = new THREE.PerspectiveCamera(60, ASPECT, 1, 10000); // FOV, aspect, near, far
+	cam = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
 	cam.position.y = 130;
 	cam.position.x = 0;
 	cam.position.z = -1125;
 	scene.add(cam);
-	
 	
 	// Camera moves with mouse, flies around with WASD/arrow keys
 	controls = new THREE.FirstPersonControls(cam);
@@ -298,14 +283,14 @@ function init()
 
 	spotLight.castShadow = true;
 
-	spotLight.shadow.mapSize.width = mapW * UNITSIZE, 10, mapW * UNITSIZE;
-	spotLight.shadow.mapSize.height = mapW * UNITSIZE, 10, mapW * UNITSIZE;
+	spotLight.shadow.mapSize.width = mapW * UNIT_SIZE, 10, mapW * UNIT_SIZE;
+	spotLight.shadow.mapSize.height = mapW * UNIT_SIZE, 10, mapW * UNIT_SIZE;
 
 	spotLight.shadow.camera.near = 1;
 	spotLight.shadow.camera.far = 10000;
 	spotLight.shadow.camera.fov = 60;
 
-	scene.add( spotLight );
+	scene.add(spotLight);
 	
 	// Add the canvas to the document
 	document.body.appendChild(renderer.domElement);
@@ -315,11 +300,10 @@ function init()
 	document.addEventListener('mouseup', onDocumentMouseUp, false);
 	
 	// Display HUD
-	//$('body').append('<canvas id="wind" width="200" height="200"></canvas>');
 	$('body').append('<div id="hud"><p>Health: <span id="health">100</span><br />Score: <span id="score">0</span></p></div>');
-	//$('body').append('<div id="credits"><p>Created by <a href="http://www.isaacsukin.com/">Isaac Sukin</a> using <a href="http://mrdoob.github.com/three.js/">Three.js</a><br />WASD to move, mouse to look, click to shoot</p></div>');
 	$('body').append('<div class="health-bar" data-total="1000" data-value="1000"><div class="bar"><div class="hit"></div></div></div>');
 	$('body').append('<div class="power-bar" data-total="1000" data-value="0"><div class="power"></div></div>');
+	
 	// Set up "hurt" flash
 	$('body').append('<div id="hurt"></div>');
 	$('#hurt').css({width: WIDTH, height: HEIGHT,});
@@ -338,7 +322,9 @@ function animate()
 // Update and display
 function render() 
 {
-  	var delta = clock.getDelta(), speed = delta * BULLETMOVESPEED;
+  	var delta = clock.getDelta();
+  	var speed = delta * BULLET_SPEED;
+
 	controls.update(delta); // Move camera
 	updatePhysics( speed );
 	
@@ -367,7 +353,7 @@ function render()
 					{
 				bullets.splice(i, 1);
 				scene.remove(b);
-				curPlayer.health -= PROJECTILEDAMAGE;
+				curPlayer.health -= PROJECTILE_DAMAGE;
 				var color = curPlayer.torso.material.color, percent = curPlayer.health / 100;
 				curPlayer.torso.material.color.setRGB(
 						percent * color.r,
@@ -392,30 +378,36 @@ function render()
 // Set up the objects in the world
 function setupScene() 
 {
-	var units = mapW;
+	// Initialize the floor
 
-	// Initialize the floor.
-	var floorGeo = new THREE.CubeGeometry(units * UNITSIZE, 10, units * UNITSIZE);
+	var floorGeo = new THREE.CubeGeometry(mapW * UNIT_SIZE, 10, mapW * UNIT_SIZE);
 	floorGeo.computeVertexNormals();
 	floorGeo.computeFaceNormals();
 	
 	var floor = new THREE.Mesh(floorGeo, new THREE.MeshLambertMaterial({color: 0xEDCBA0}));
 	scene.add(floor);
 	
+
 	// Lighting
+
 	var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
-	 directionalLight1.position.set( .5, .9, .5);
-	 directionalLight1.castShadow = true;
-	 scene.add( directionalLight1 );
-	 var directionalLight2 = new THREE.DirectionalLight(0xF7EFBE, .5);
-	 directionalLight2.position.set( -.5, .9, -.5);
-	 directionalLight2.castShadow = true;
-	 scene.add( directionalLight2 );
+	directionalLight1.position.set( .5, .9, .5);
+	directionalLight1.castShadow = true;
+	scene.add( directionalLight1 );
+
+	var directionalLight2 = new THREE.DirectionalLight(0xF7EFBE, .5);
+	directionalLight2.position.set( -.5, .9, -.5);
+	directionalLight2.castShadow = true;
+	scene.add( directionalLight2 );
 	
+
+	// Background
+
 	// Load the background texture
-	var texture = new THREE.ImageUtils.loadTexture('images/Top-Header-Grass-Sky-Background-JPG.jpg');
+	var texture = new THREE.TextureLoader().load('images/Top-Header-Grass-Sky-Background-JPG.jpg');
 	var backgroundMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 0), new THREE.MeshBasicMaterial({map: texture}));
 
+	// The background (skybox) should have no effect on depth buffer.
 	backgroundMesh.material.depthTest = false;
 	backgroundMesh.material.depthWrite = false;
 
@@ -423,6 +415,7 @@ function setupScene()
 	backgroundScene = new THREE.Scene();
 	backgroundCamera = new THREE.Camera();
 
+	// Add the background to the scene.
 	backgroundScene.add(backgroundCamera);
 	backgroundScene.add(backgroundMesh);
 }
@@ -455,8 +448,8 @@ function distance(x1, y1, x2, y2)
 
 function getMapSector(v) 
 {
-	var x = Math.floor((v.x + UNITSIZE / 2) / UNITSIZE + mapW/2);
-	var z = Math.floor((v.z + UNITSIZE / 2) / UNITSIZE + mapW/2);
+	var x = Math.floor((v.x + UNIT_SIZE / 2) / UNIT_SIZE + mapW/2);
+	var z = Math.floor((v.z + UNIT_SIZE / 2) / UNIT_SIZE + mapW/2);
 	return {x: x, z: z};
 }
 
@@ -516,18 +509,13 @@ function createBullet(obj)
 	return sphere;
 }
 
-// function drawWind()
-// {
-// 	var c = getMapSector(cam.position), context = document.getElementById('wind').getContext('2d');
-// 	context.font = '10px Helvetica';
-// }
 var mousedownID = -1;
 var pow = .1;
 function onDocumentMouseDown(e)
 {
 	// Reset the power and arrow speed.
 	pow = .1;
-	ARROWSPEED = 1;
+	ARROW_SPEED = 1;
 	$('.power').css({width: 0+"%",});
 	$('.power-bar').css({value: 0,});
 	// Prevent infinite loop.
@@ -540,12 +528,9 @@ function onDocumentMouseDown(e)
 function whileMouseDown()
 {
 	// While holding mouse down, increase arrow power.
-	ARROWSPEED += 1;
-	// TODO working on changing the velocity based on which player we are.
-	if(wind.z > 0)
-	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - gravityConstant/100, wind.z*ARROWSPEED/(2*Math.PI)) );
-	else
-	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - gravityConstant/100, wind.z*-ARROWSPEED/(2*Math.PI)) );
+	ARROW_SPEED += 1;
+
+	physicsWorld.setGravity( new Ammo.btVector3(0, -GRAVITY/100, 0) );
 
 	// Grab CSS of the power bar.
 	var value = $('.power-bar').data('value');
@@ -597,25 +582,6 @@ function onDocumentMouseUp(e)
 				pos.copy( raycaster.ray.direction );
 				pos.multiplyScalar( 24 );
 				ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
-				// cam =
-				// if(cam.position.x == -1000)
-				// {
-				// 	cam.rotation.y = -cam.position.y;
-				// 	cam.position.x = 1000;
-				// 	cam.position.z = 1000;
-				// 	cam.rotation.y = -cam.position.y;
-				// }
-				// else
-				// {
-				// 	cam.rotation.y = -cam.position.y;
-				// 	cam.position.x = -1000;
-				// 	cam.position.z = -1000;
-				// 	cam.rotation.y = -cam.position.y;
-				// }
-				
-				//cam.lookAt(new THREE.Vector3);
-				//cam.lookAt(new THREE.Vector3);
-			//
 }
 
 
@@ -624,10 +590,10 @@ $(window).resize(function()
 {
 	WIDTH = window.innerWidth;
 	HEIGHT = window.innerHeight;
-	ASPECT = WIDTH / HEIGHT;
+	ASPECT_RATIO = WIDTH / HEIGHT;
 	if (cam) 
 	{
-		cam.aspect = ASPECT;
+		cam.aspect = ASPECT_RATIO;
 		cam.updateProjectionMatrix();
 	}
 	if (renderer) 
@@ -729,7 +695,7 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 		broadphase = new Ammo.btDbvtBroadphase();
 		solver = new Ammo.btSequentialImpulseConstraintSolver();
 		physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - gravityConstant, wind.z/(2*Math.PI)) );
+		physicsWorld.setGravity( new Ammo.btVector3((2*Math.PI), - GRAVITY, (2*Math.PI)));
 		
 	}
 
@@ -842,11 +808,7 @@ function createMaterial( color )
 	color = color || createRandomColor();
 	return new THREE.MeshPhongMaterial( { color: color } );
 }
-function initWind()
-{
-	wind = new THREE.Vector3(getRandomArbitrary(-2*Math.PI, 2*Math.PI), 1, getRandomArbitrary(-2*Math.PI, 2*Math.PI));
-	console.log(wind.x,wind.y,wind.z);
-}
+
 function getRandomArbitrary(min, max) 
 {
   	return Math.random() * (max - min) + min;
