@@ -156,20 +156,20 @@
   </style>
   <script src="jquery-1.7.2.min.js"></script>
 
-  <script src="/three.js-master/build/three.js"></script>
+  <script src="three.js-master/build/three.js"></script>
   <script src="Three.FirstPersonControls.js"></script>
-  <script src="/three.js-master/examples/js/renderers/Projector.js"></script>
-  <script src="/Player.js"></script>
+  <script src="three.js-master/examples/js/renderers/Projector.js"></script>
+  <script src="Player.js"></script>
   <!-- <script src="main.js"></script> -->
-  <script src="/three.js-master/examples/js/libs/ammo.js"></script>
-	<script src="/three.js-master/examples/js/controls/OrbitControls.js"></script>
-	<script src="/three.js-master/examples/js/WebGL.js"></script>
-	<script src="/three.js-master/examples/js/libs/stats.min.js"></script>
-	<script src="/three.js-master/examples/js/ConvexObjectBreaker.js"></script>
-	<script src="/three.js-master/examples/js/QuickHull.js"></script>
-  <script src="/three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
-  <script src="/three.js-master/examples/js/loaders/STLLoader.js"></script>
-  <script src="/three.js-master/examples/js/loaders/PLYLoader.js"></script>
+  <script src="three.js-master/examples/js/libs/ammo.js"></script>
+<script src="three.js-master/examples/js/controls/OrbitControls.js"></script>
+<script src="three.js-master/examples/js/WebGL.js"></script>
+<script src="three.js-master/examples/js/libs/stats.min.js"></script>
+<script src="three.js-master/examples/js/ConvexObjectBreaker.js"></script>
+<script src="three.js-master/examples/js/QuickHull.js"></script>
+  <script src="three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
+  <script src="three.js-master/examples/js/loaders/STLLoader.js"></script>
+  <script src="three.js-master/examples/js/loaders/PLYLoader.js"></script>
 
 </head>
 <body>
@@ -381,6 +381,16 @@ function render()
 		b.translateX(speed * d.x);
 		b.translateZ(speed * d.z);
   	}
+	for (let index = 0; index < rigidBodies.length; index++) 
+	{
+		let currentArrow = rigidBodies[index];
+		if(currentArrow.position.x > 2000 || currentArrow.position.x < -2000 
+		 || currentArrow.position.x > 2000 || currentArrow.position.x < -2000)
+		{
+			scene.remove(currentArrow);
+		}
+		
+	}
 	renderer.autoClear = false;
 	renderer.clear();
 	renderer.render(backgroundScene, backgroundCamera)
@@ -402,7 +412,7 @@ function setupScene()
 	scene.add(floor);
 	
 	var loader = new THREE.PLYLoader();
-				loader.load( '/models/wind.ply', function ( geometry ) {
+				loader.load( 'models/wind.ply', function ( geometry ) {
 					geometry.computeVertexNormals();
 					var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
 					var mesh = new THREE.Mesh( geometry, material );
@@ -420,7 +430,7 @@ function setupScene()
 					scene.add( mesh );
 				} );
 	var loader = new THREE.PLYLoader();
-				loader.load( '/models/wind.ply', function ( geometry ) {
+				loader.load( 'models/wind.ply', function ( geometry ) {
 					geometry.computeVertexNormals();
 					var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
 					var mesh2 = new THREE.Mesh( geometry, material );
@@ -472,13 +482,13 @@ var player2;
 function initTargets() 
 {
 	// Add player one
-	player1 = new Player(0xff0000, new THREE.Vector3(1000, 168/2, 1000), new THREE.Euler(0, 1.5708 * 2, 0));
+	player1 = new Player(0xff0000, new THREE.Vector3(0, 168/2,-1125), new THREE.Euler(0,0,0));
 
 	targets.push(player1.torso);
 	scene.add(player1.torsoDummy);
 
 	// Add player two
-	player2 = new Player(0x0000ff, new THREE.Vector3(-1000, 168/2, -1000), new THREE.Euler(0, 0, 0));
+	player2 = new Player(0x0000ff, new THREE.Vector3(0, 168/2,1125), new THREE.Euler(0, 1.5708 * 2, 0));
 
 	targets.push(player2.torso);
 	scene.add(player2.torsoDummy);
@@ -579,9 +589,9 @@ function whileMouseDown()
 	ARROWSPEED += 1;
 	// TODO working on changing the velocity based on which player we are.
 	if(wind.z > 0)
-	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - gravityConstant/100, wind.z*ARROWSPEED/(2*Math.PI)) );
+	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - gravityConstant/50, wind.z*ARROWSPEED/(2*Math.PI)) );
 	else
-	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - gravityConstant/100, wind.z*-ARROWSPEED/(2*Math.PI)) );
+	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - gravityConstant/50, wind.z*-ARROWSPEED/(2*Math.PI)) );
 
 	// Grab CSS of the power bar.
 	var value = $('.power-bar').data('value');
@@ -591,7 +601,7 @@ function whileMouseDown()
     var newValue = pow;
 	pow += .01;
 	var barWidth = (newValue / total) * 100;
-	if(pow *100 < 100)
+	if(pow * 100 < 100)
 	{
 		var hitWidth = (pow) * 100 + "%";
 	}
@@ -620,7 +630,7 @@ function onDocumentMouseUp(e)
 				var ballMass = 1;
 				var ballRadius = 2;
         var ball = new THREE.Mesh( new THREE.SphereBufferGeometry( ballRadius, 14, 10 ), ballMaterial );
-        var arrow = loader.load('/models/Arrow.stl');
+        var arrow = loader.load('models/Arrow.stl');
              
 				ball.castShadow = true;
 				ball.receiveShadow = true;
@@ -765,7 +775,7 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 		broadphase = new Ammo.btDbvtBroadphase();
 		solver = new Ammo.btSequentialImpulseConstraintSolver();
 		physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - gravityConstant, wind.z/(2*Math.PI)) );
+		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), -gravityConstant/50, wind.z/(2*Math.PI)) );
 		
 	}
 
