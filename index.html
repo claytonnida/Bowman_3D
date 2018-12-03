@@ -580,7 +580,8 @@ function onDocumentMouseUp(e) {
 		mesh3.position.y = 100;
 		mesh3.position.x = -100;
 		mesh3.position.z = 900;
-		mesh3.rotation.z += (1.5708); 
+		//mesh3.rotation.z += (1.5708); 
+		mesh3.rotation = raycaster.ray.direction;
 		mesh3.scale.multiplyScalar( 10.0 );
 		mesh3.scale.x = 4;
 		mesh3.castShadow = true;
