@@ -19,6 +19,16 @@
 	<script src="three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
 	<script src="three.js-master/examples/js/loaders/STLLoader.js"></script>
 	<script src="three.js-master/examples/js/loaders/PLYLoader.js"></script>
+	<script src="three.js-master/examples/js/geometries/hilbert3D.js"></script>
+	<script src='three.js-master/examples/js/lines/LineSegmentsGeometry.js'></script>
+	<script src='three.js-master/examples/js/lines/LineGeometry.js'></script>
+	<script src='three.js-master/examples/js/lines/WireframeGeometry2.js'></script>
+
+	<script src='three.js-master/examples/js/lines/LineMaterial.js'></script>
+
+	<script src='three.js-master/examples/js/lines/LineSegments2.js'></script>
+	<script src='three.js-master/examples/js/lines/Line2.js'></script>
+	<script src='three.js-master/examples/js/lines/Wireframe.js'></script>
 	
 	<script src="three.js-master/src/loaders/TextureLoader.js"></script>
 
@@ -68,6 +78,7 @@ var ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } );
 var loader = new THREE.STLLoader();
 var mousedownID = -1;
 var pow = .1;
+var testArrow;
 
 // Holds the Player objects for our game.
 var players = [];
@@ -172,6 +183,7 @@ function init()
 	// Track mouse position so we know where to shoot
 	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	document.addEventListener('mouseup', onDocumentMouseUp, false);
+	document.addEventListener('mousemove', onDocumentMouseMove, false);
 	
 	// Display HUD
 	$('body').append('<div id="hud"><p>Health: <span id="health">100</span><br />Score: <span id="score">0</span></p></div>');
@@ -197,7 +209,25 @@ function render()
 
 	controls.update(delta); // Move camera
 	updatePhysics( speed );
+for (let index = 0; index < rigidBodies.length; index++) 
+{
+	let thisArrow = rigidBodies[index];
+	if(thisArrow.position.x > 2000 || thisArrow.position.x < -2000 || thisArrow.position.z > 2000 || thisArrow.position.z < -2000)
+	{
+		scene.remove(thisArrow);
+	}
+	
 
+}
+	let arrowDir = scene.getObjectByName("arrowDir");
+	if(arrowDir)
+	{
+		//console.log(arrowDir.direction);
+		//arrowDir.position.set(raycaster.ray.origin);
+		raycaster.setFromCamera( mouseCoords, cam );
+		arrowDir.setDirection(raycaster.ray.direction);
+	}
+	
 	renderer.autoClear = false;
 	renderer.clear();
 	renderer.render(backgroundScene, backgroundCamera)
@@ -252,6 +282,12 @@ function setupScene()
 					scene.add( mesh2 );
 				} );
 
+	var arrowMark = new THREE.ArrowHelper(
+		new THREE.Vector3(0,0,1), new THREE.Vector3(0,130,-1125), 1000, 0x884400);
+	arrowMark.name = "arrowDir";
+	scene.add(arrowMark);
+	console.log("added arrow");
+						
 	// Lighting
 	var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
 	directionalLight1.position.set( .5, .9, .5);
@@ -312,6 +348,7 @@ function checkWallCollision(v) {
 
 function onDocumentMouseDown(e) {
 	// Reset the power and arrow speed.
+	//console.log(raycaster.ray.origin);
 	pow = .1;
 	ARROWSPEED = 1;
 	$('.power').css({width: 0+"%",});
@@ -323,6 +360,15 @@ function onDocumentMouseDown(e) {
 }
 
 function whileMouseDown() {
+	// var lineMaterial = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+	// var lineGeo = new THREE.Geometry();
+	// lineGeo.vertices.push(new THREE.Vector3( -10, 0, 0) );
+	// lineGeo.vertices.push(new THREE.Vector3( 0, 10, 0) );
+	// //lineGeo.vertices.push(new THREE.Vector3( 10, 0, 0) );
+	// var line = new THREE.Line( lineGeo, lineMaterial );
+	// scene.add( line );
+	
+	
 	// While holding mouse down, increase arrow power.
 	ARROWSPEED += 1;
 	// TODO working on changing the velocity based on which player we are.
@@ -337,7 +383,7 @@ function whileMouseDown() {
 	
 	// Update the value based on power.
     var newValue = pow;
-	pow += .01;
+	pow += .02;
 	var barWidth = (newValue / total) * 100;
 	if(pow * 100 < 100) {
 		var hitWidth = (pow) * 100 + "%";
@@ -349,7 +395,13 @@ function whileMouseDown() {
 	$('.power').css({width: hitWidth,});
 	$('.power-bar').css({value: newValue,});
 }
-
+function onDocumentMouseMove(e)
+{
+	mouseCoords.set(
+		 ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
+		-( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
+	);
+}
 function onDocumentMouseUp(e) {
 	if(mousedownID != -1) 
 	{  //Only stop if exists
@@ -367,25 +419,39 @@ function onDocumentMouseUp(e) {
 	// Creates a ball and throws it
 	var ballMass = 1;
 	var ballRadius = 2;
-	var ball = new THREE.Mesh( new THREE.SphereBufferGeometry( ballRadius, 14, 10 ), ballMaterial );
-	var arrow = loader.load('/models/Arrow.stl');
-				 
-	ball.castShadow = true;
-	ball.receiveShadow = true;
+	var loader = new THREE.PLYLoader();
+	loader.load( 'models/Arrow.ply', function ( geometry ) {
+		geometry.computeVertexNormals();
+		var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
+		var mesh3 = new THREE.Mesh( geometry, material );
+		mesh3.position.y = 100;
+		mesh3.position.x = -100;
+		mesh3.position.z = 900;
+		//mesh3.rotation.x = - Math.PI / 2;
+		//let angle = Math.atan2(wind.z,-wind.x);
+		//mesh3.rotation.z = angle;
+		mesh3.rotation.z += (1.5708); 
+		mesh3.scale.multiplyScalar( 10.0 );
+		mesh3.castShadow = true;
+		mesh3.receiveShadow = true;
+		mesh3.castShadow = true;
+		mesh3.receiveShadow = true;
 
-	var ballShape = new Ammo.btSphereShape( ballRadius );
-	ballShape.setMargin( margin );
+		var ballShape = new Ammo.btSphereShape( ballRadius );
+		ballShape.setMargin( margin );
+		
+		pos.copy( raycaster.ray.direction );
+		pos.add( raycaster.ray.origin );
+		
+		quat.set( 0, 0, 0, 1 );
+		
+		var ballBody = createRigidBody( mesh3, ballShape, ballMass, pos, quat, new THREE.Vector3(wind.x,0.0,wind.z) );
+		pos.copy( raycaster.ray.direction );
+		pos.multiplyScalar( 24 );
+		
+		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
 	
-	pos.copy( raycaster.ray.direction );
-	pos.add( raycaster.ray.origin );
-	
-	quat.set( 0, 0, 0, 1 );
-	
-	var ballBody = createRigidBody( ball, ballShape, ballMass, pos, quat );
-	pos.copy( raycaster.ray.direction );
-	pos.multiplyScalar( 24 );
-	
-	ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+	});
 }
 
 
@@ -454,7 +520,9 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 	body.setFriction( 0.5 );
 
 	if ( vel ) {
+		
 		body.setLinearVelocity( new Ammo.btVector3( vel.x, vel.y, vel.z ) );
+		
 	}
 	
 	if ( angVel ) {
@@ -469,9 +537,31 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 		rigidBodies.push( object );
 		body.setActivationState( 4 ); // Disable deactivation
 	}
-
-	physicsWorld.addRigidBody( body );
 	
+	//https://stackoverflow.com/questions/18370701/how-to-draw-the-trajectory-of-a-mesh-with-threejs
+	physicsWorld.addRigidBody( body );
+	// var arrowMark = new THREE.ArrowHelper(
+	// 	raycaster.ray.direction, raycaster.ray.origin, 100, 0x884400);
+
+	// // matLine = new THREE.LineMaterial( {
+	// // 				color: 0xffffff,
+	// // 				linewidth: 50, // in pixels
+	// // 				vertexColors: THREE.VertexColors,
+	// // 				//resolution:  // to be set by renderer, eventually
+	// // 				dashed: false
+	// // 			} );
+	// //arrowMark.position.set(0,300,0);
+	// console.log(arrowMark.line.material);
+	// // Update arrow
+	// //var pvel = body.getLinearVelocity();
+	// //console.log(pvel);
+	
+	// let num = vel.normalize.x;
+	// //arrowMark.setDirection(vel.normalize);
+	// console.log(mouseCoords);
+	// //arrowMark.setLength(1000);
+	// scene.add(arrowMark);
+	// console.log("added arrow");
 	return body;
 }
 
@@ -496,7 +586,7 @@ function updatePhysics( deltaTime )
 	for ( var i = 0, il = rigidBodies.length; i < il; i++ ) {
 		var objThree = rigidBodies[ i ];
 		var objPhys = objThree.userData.physicsBody;
-
+		
 		var ms = objPhys.getMotionState();
 		
 		if ( ms ) {
@@ -507,7 +597,8 @@ function updatePhysics( deltaTime )
 			
 			objThree.position.set(p.x(), p.y(), p.z());
 			
-			objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+			//objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+			objThree.rotation.y = (4.7124);
 			objThree.userData.collided = false;
 		}
 	}
