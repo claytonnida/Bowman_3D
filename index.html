@@ -17,7 +17,6 @@
 	<script src="three.js-master/examples/js/ConvexObjectBreaker.js"></script>
 	<script src="three.js-master/examples/js/QuickHull.js"></script>
 	<script src="three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
-	<script src="three.js-master/examples/js/loaders/STLLoader.js"></script>
 	<script src="three.js-master/examples/js/loaders/PLYLoader.js"></script>
 	
 	<script src="three.js-master/src/loaders/TextureLoader.js"></script>
@@ -64,7 +63,7 @@ var textureLoader;
 var mouseCoords = new THREE.Vector2();
 var raycaster = new THREE.Raycaster();
 var ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } );
-var loader = new THREE.STLLoader();
+var loader = new THREE.PLYLoader();
 var mousedownID = -1;
 var pow = .1;
 
@@ -128,14 +127,16 @@ function init()
 	//scene.fog = new THREE.FogExp2(0xD6F1FF, 0.0005); // color, density
 	
 	// Set up camera
-	cam = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
+	cam = new THREE.PerspectiveCamera(40, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
 	cam.position.y = 130;
 	cam.position.x = 0;
 	cam.position.z = -1125;
+	cam.lookAt(new THREE.Vector3( 0, 84, 1125 ));
 	scene.add(cam);
 	
 	// Camera moves with mouse, flies around with WASD/arrow keys
 	controls = new THREE.FirstPersonControls(cam);
+	controls.freeze = true;
 	controls.movementSpeed = 600;
 	controls.lookSpeed = .15;
 	
@@ -144,7 +145,7 @@ function init()
 	
 	// World objects
 	setupScene();
-	initTargets();
+	initPlayers();
 	
 	// Handle drawing as WebGL (faster than Canvas but less supported)
 	renderer = new THREE.WebGLRenderer();
@@ -215,7 +216,6 @@ function setupScene()
 	var floor = new THREE.Mesh(floorGeo, new THREE.MeshLambertMaterial({color: 0xEDCBA0}));
 	scene.add(floor);
 
-	var loader = new THREE.PLYLoader();
 	loader.load( 'models/wind.ply', function ( geometry ) {
 		geometry.computeVertexNormals();
 
@@ -237,7 +237,6 @@ function setupScene()
 		scene.add( mesh );
 	});
 
-	var loader = new THREE.PLYLoader();
 	loader.load( 'models/wind.ply', function ( geometry ) {
 		geometry.computeVertexNormals();
 		
@@ -289,16 +288,56 @@ function setupScene()
 	backgroundScene.add(backgroundMesh);
 }
 
-function initTargets() 
+function initPlayers() 
 {
-	// Add player one
-	player1 = new Player(0xff0000, new THREE.Vector3(0, 168/2, -1125), new THREE.Euler(0, 0, 0));
+	// Add player one's bow object to scene
+	var bow1 = new THREE.Object3D();
+	bow1.name = "bow1";		
+	bow1.position.y = -25;
+	bow1.position.x = 0;
+	bow1.position.z = -36;
+	scene.add(bow1);
 
+	// Add player one's bow object to scene
+	var bow2 = new THREE.Object3D();
+	bow2.name = "bow2";		
+	bow2.position.y = -25;
+	bow2.position.x = 0;
+	bow2.position.z = -36;
+	scene.add(bow2);
+
+	console.log(scene.children);
+
+	// Load the PLY model for the bows and assign the meshes to their corresponding objects.
+	loader.load( 'models/bow.ply', function ( geometry ) {
+		geometry.computeVertexNormals();
+		
+		var material = new THREE.MeshStandardMaterial( { color: 0x7c440b, flatShading: true } );
+		var mesh = new THREE.Mesh( geometry, material );
+		mesh.rotateZ(1.5708);
+		mesh.scale.multiplyScalar( .35 );
+
+		let parent1 = scene.getObjectByName("bow1");
+		if(parent1) {
+			parent1.add(mesh);
+		}		
+
+		let parent2 = scene.getObjectByName("bow2");
+		if(parent2) {
+			parent2.add(mesh);
+		}
+	});
+
+	// Add player one
+	player1 = new Player(0xff0000, new THREE.Vector3(0, 84, -1125), new THREE.Euler(0, 0, 0));
+	player1.leftHandDummy.add(scene.getObjectByName("bow1"));
+	
 	players.push(player1.torso);
 	scene.add(player1.torsoDummy);
 
 	// Add player two
-	player2 = new Player(0x0000ff, new THREE.Vector3(0, 168/2, 1125), new THREE.Euler(0, 1.5708 * 2, 0));
+	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0));
+	player2.leftHandDummy.add(scene.getObjectByName("bow2"));
 
 	players.push(player2.torso);
 	scene.add(player2.torsoDummy);
@@ -318,6 +357,7 @@ function checkWallCollision(v) {
 }
 
 function onDocumentMouseDown(e) {
+
 	// Reset the power and arrow speed.
 	pow = .1;
 	ARROWSPEED = 1;
@@ -376,7 +416,6 @@ function onDocumentMouseUp(e) {
 	var ballMass = 1;
 	var ballRadius = 2;
 	var ball = new THREE.Mesh( new THREE.SphereBufferGeometry( ballRadius, 14, 10 ), ballMaterial );
-	var arrow = loader.load('/models/Arrow.stl');
 				 
 	ball.castShadow = true;
 	ball.receiveShadow = true;

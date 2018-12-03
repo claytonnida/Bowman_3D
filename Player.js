@@ -62,15 +62,21 @@ var Player = function(_color, _position, _rotation) {
 	this.rightArm.position.set(0,-10,-4);
 	this.rightArmDummy.add(this.rightArm);
 
-	// Initialize left hand
-	this.leftHand = new THREE.Mesh(new THREE.CubeGeometry(10, 20, 6), this.material);
-	this.leftHand.position.set(0, -26, -4.0);
-	this.leftArmDummy.add(this.leftHand);
+	// Initialize left hand and dummy
+	this.leftHandDummy = new THREE.Object3D();
+	this.leftHandDummy.position.set(0, -26, -4);
+	this.leftArmDummy.add(this.leftHandDummy);
 
-	// Initialize right hand
+	this.leftHand = new THREE.Mesh(new THREE.CubeGeometry(10, 20, 6), this.material);
+	this.leftHandDummy.add(this.leftHand);
+
+	// Initialize right hand and dummy
+	this.rightHandDummy = new THREE.Object3D();
+	this.rightHandDummy.position.set(0, -26, -4);
+	this.rightArmDummy.add(this.rightHandDummy);
+
 	this.rightHand = new THREE.Mesh(new THREE.CubeGeometry(10, 20, 6), this.material);
-	this.rightHand.position.set(0, -26, -4.0);
-	this.rightArmDummy.add(this.rightHand);
+	this.rightHandDummy.add(this.rightHand);
 
 	// Start lower body
 
