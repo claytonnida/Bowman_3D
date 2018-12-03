@@ -11,11 +11,11 @@ var Player = function(_color, _position, _rotation, _bow) {
 
 	// Most of the Player's upper body parts will utilize this
 	this.bow = _bow;
-	this.bow.position.copy(new THREE.Vector3(-5, 7, 50));
+	this.bow.position.set(-5, 7, 50);
 
 	// Set a dummy object for where the arrows will rest
 	let middle = new THREE.Mesh( new THREE.CubeGeometry(1,2.5,1), new THREE.MeshPhongMaterial({color: 0x55ff00}));
-	middle.position.copy(new THREE.Vector3(-.7, -20, -38));
+	middle.position.set(-.7, -20, -38);
 	this.bow.add(middle);
 
 	// The code below initializes the hierarchy of models for the player.
@@ -57,40 +57,50 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.upperTorsoDummy.add(this.rightShoulderDummy);
 	
 	this.rightShoulder = new THREE.Mesh(new THREE.CubeGeometry(12, 20, 8), this.material);
-	this.rightShoulder.position.set(0,-8,0);
+	this.rightShoulder.position.set(0,-0,0);
 	this.rightShoulderDummy.add(this.rightShoulder);
+
+	this.leftHandDummy = new THREE.Object3D();
+	this.leftHandDummy.rotateZ(.45);
+	this.leftHandDummy.position.set(0, -20, -35);
+	this.bow.add(this.leftHandDummy);
+
+	this.leftHand = new THREE.Mesh(new THREE.CubeGeometry(3, 5, 5), this.material);
+	this.leftHandDummy.add(this.leftHand);
 
 	// Initialize left arm and dummy
 	this.leftArmDummy = new THREE.Object3D();
-	this.leftArmDummy.position.set(0,-18,4);
-	this.leftShoulderDummy.add(this.leftArmDummy);
+	this.leftArmDummy.position.set(0, -2, 0);
+	this.leftHandDummy.add(this.leftArmDummy);
 	
-	this.leftArm = new THREE.Mesh(new THREE.CubeGeometry(10, 20, 6), this.material);
-	this.leftArm.position.set(0,-10,-4);
+	this.leftArm = new THREE.Mesh(new THREE.CubeGeometry(3, 13, 4), this.material);
+	this.leftArm.position.set(0, -6.5, 0);
 	this.leftArmDummy.add(this.leftArm);
+
+	// Initialize right hand and dummy
+	this.rightHandDummy = new THREE.Object3D();
+	this.rightHandDummy.position.set(-5, -23, -36);
+	this.bow.add(this.rightHandDummy);
+
+	this.rightHand = new THREE.Mesh(new THREE.CubeGeometry(3, 5, 5), this.material);
+	this.rightHandDummy.add(this.rightHand);
 
 	// Initialize right arm and dummy
 	this.rightArmDummy = new THREE.Object3D();
-	this.rightArmDummy.position.set(0,-18,4);
-	this.rightShoulderDummy.add(this.rightArmDummy);
+	this.rightArmDummy.position.set(0, -2, 0);
+	this.rightArmDummy.rotateZ(-.2);
+	this.rightHandDummy.add(this.rightArmDummy);
 	
-	this.rightArm = new THREE.Mesh(new THREE.CubeGeometry(10, 20, 6), this.material);
-	this.rightArm.position.set(0,-10,-4);
+	this.rightArm = new THREE.Mesh(new THREE.CubeGeometry(3, 13, 4), this.material);
+	this.rightArm.position.set(0, -6.5, 0);
 	this.rightArmDummy.add(this.rightArm);
 
-	this.leftHand = new THREE.Mesh(new THREE.CubeGeometry(3, 5, 5), this.material);
-	this.leftHand.rotateZ(.45);
-	this.leftHand.position.set(0, -20, -35);
-	this.bow.add(this.leftHand);
+	this.rightElbowDummy = new THREE.Object3D();
+	this.rightElbowDummy.position.set(0, -6.5, 0);
+	this.rightArm.add(this.rightElbowDummy);
 
-	// Initialize right hand and dummy
-	// this.rightHandDummy = new THREE.Object3D();
-	// this.rightHandDummy.position.set(0, -26, -4);
-	// this.rightArmDummy.add(this.rightHandDummy);
-
-	this.rightHand = new THREE.Mesh(new THREE.CubeGeometry(3, 5, 5), this.material);
-	this.rightHand.position.set(-5, -20, -36);
-	this.bow.add(this.rightHand);
+	this.rightElbow = new THREE.Mesh(new THREE.CubeGeometry(4,4,4), this.material);
+	this.rightElbowDummy.add(this.rightElbow);
 
 	// Start lower body
 
@@ -163,3 +173,11 @@ Player.prototype.setRotation = function(newRot) {
 	this.playerDummy.rotation.copy(newRot); 
 };
 
+Player.prototype.update = function() {
+	let dir = new THREE.Vector3();
+	let axis = new THREE.Vector3();
+	dir.subVectors(this.rightElbowDummy.position, this.rightShoulderDummy);
+	dir.normalize();
+	this.rightShoulderDummy.direction = dir;
+
+}

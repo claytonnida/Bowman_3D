@@ -228,8 +228,6 @@ function render() {
 
 	if(player1.bow) {
 
-		// raycaster.setFromCamera( mouseCoords, cam );
-
 		let dir = raycaster.ray.direction;
 		let axis = new THREE.Vector3();
 
@@ -246,6 +244,8 @@ function render() {
 			player1.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
 		}
 	}
+
+	player1.update();
 	
 	renderer.autoClear = false;
 	renderer.clear();
