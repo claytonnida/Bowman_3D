@@ -237,7 +237,7 @@ function render()
 	var player2Health = $('.health-bar2').data('value');
 	var total = $('.health-bar').data('total');
 	
-	
+	console.log(rigidBodies.length);
 	
 	if(player1Health <= 1 || player2Health <= 1)
 	{
@@ -266,6 +266,7 @@ function render()
 		}
 		if(rigidBodies[index])
 		{
+		
 			for (var vertexIndex = 0; vertexIndex < rigidBodies[index].geometry.attributes.position.array.length/3; vertexIndex++)
 			{       
 				var localVertex = new THREE.Vector3(rigidBodies[index].geometry.attributes.position.array[vertexIndex *3],rigidBodies[index].geometry.attributes.position.array[vertexIndex*3+1],rigidBodies[index].geometry.attributes.position.array[vertexIndex*3+2]);
@@ -396,7 +397,7 @@ function render()
 						});
 					
 					}
-						rigidBodies.pop();
+						rigidBodies.shift();
 				}
 			}
 			
@@ -744,7 +745,7 @@ function onDocumentMouseUp(e) {
 	// Creates a ball and throws it
 	var ballMass = 1;
 	var ballRadius = 2;
-
+	var loader = new THREE.PLYLoader();
 	loader.load( 'models/Arrow.ply', function ( geometry ) {
 		geometry.computeVertexNormals();
 		var material = new THREE.MeshStandardMaterial( { color: 0x130d06, flatShading: true } );
@@ -758,7 +759,6 @@ function onDocumentMouseUp(e) {
 		mesh3.scale.x = 4;
 		mesh3.castShadow = true;
 		mesh3.receiveShadow = true;
-
 		var ballShape = new Ammo.btSphereShape( ballRadius );
 		ballShape.setMargin( margin );
 		
@@ -773,22 +773,22 @@ function onDocumentMouseUp(e) {
 		pos.multiplyScalar( 24 );
 		
 		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );	
-
 		$('.power').css({width: 0+"%",});
 		$('.power-bar').css({value: 0,});
+		player1.rightHandDummy.position.set(-.6, -32, -36);
+		player1.rightArmDummy.rotation.set(0, 0, -.2);
+		player1.rightElbowDummy.rotation.set(0, 0, .2);
+		player1.rightElbow.rotation.set(0, 0, 0);
+		player1.leftShoulderDummy.rotation.set(0, 0, -.6);
 	});
 
 
 	// Reset the player's right arm
-	console.log(player1.rightHandDummy.position);
-	console.log(player1.rightElbowDummy.rotation.z);
-	console.log(player1.rightArmDummy.rotation.z);
-	console.log(player1.leftShoulderDummy.rotation.z);
-	player1.rightHandDummy.position.set(-.6, -32, -36);
-	player1.rightArmDummy.rotation.set(0, 0, -.2);
-	player1.rightElbowDummy.rotation.set(0, 0, .2);
-	player1.rightElbow.rotation.set(0, 0, 0);
-	player1.leftShoulderDummy.rotation.set(0, 0, -.6);
+	// console.log(player1.rightHandDummy.position);
+	// console.log(player1.rightElbowDummy.rotation.z);
+	// console.log(player1.rightArmDummy.rotation.z);
+	// console.log(player1.leftShoulderDummy.rotation.z);
+	
 
 
 }
@@ -829,6 +829,7 @@ function removeDebris(object) {
 
 function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel ) 
 {
+	console.log("Createn");
 	if (pos) {
 		object.position.copy( pos );
 	} else {
