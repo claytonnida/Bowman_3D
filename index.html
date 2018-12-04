@@ -237,7 +237,7 @@ function render()
 	var player2Health = $('.health-bar2').data('value');
 	var total = $('.health-bar').data('total');
 	
-	console.log(rigidBodies.length);
+	
 	
 	if(player1Health <= 1 || player2Health <= 1)
 	{
@@ -782,15 +782,12 @@ function onDocumentMouseUp(e) {
 		player1.leftShoulderDummy.rotation.set(0, 0, -.6);
 	});
 
-
 	// Reset the player's right arm
 	// console.log(player1.rightHandDummy.position);
 	// console.log(player1.rightElbowDummy.rotation.z);
 	// console.log(player1.rightArmDummy.rotation.z);
 	// console.log(player1.leftShoulderDummy.rotation.z);
 	
-
-
 }
 
 // Handle window resizing
