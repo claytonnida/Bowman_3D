@@ -102,14 +102,15 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.rightElbowDummy.add(this.rightShoulder);
 
 
-	// this.lowerTorso = new THREE.Mesh(new THREE.CubeGeometry(28, 18, 18), this.material);
-	// this.lowerTorso.position.set(0,-12.5,0);
-	// this.upperTorsoDummy.add(this.lowerTorso);
+	this.lowerTorso = new THREE.Mesh(new THREE.CubeGeometry(28, 18, 18), this.material);
+	this.lowerTorso.position.set(0,-12.5,0);
+	this.upperTorsoDummy.add(this.lowerTorso);
 
 	this.waistDummy = new THREE.Object3D();
 	this.waistDummy.position.set(0,-26,0);
 	this.waistDummy.rotateY(-1.2);
 	this.playerDummy.add(this.waistDummy);
+
 	
 	this.waist = new THREE.Mesh(new THREE.CubeGeometry(14, 12, 18), this.material);
 	this.waistDummy.add(this.waist);
