@@ -71,7 +71,6 @@ var runAnim = true;
 var mouseCoords = new THREE.Vector2();
 var container, stats;
 var textureLoader;
-var mouseCoords = new THREE.Vector2();
 var raycaster = new THREE.Raycaster();
 var ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } );
 var loader = new THREE.PLYLoader();
@@ -119,7 +118,8 @@ var impactNormal = new THREE.Vector3();
 $(document).ready(function() 
 {
 	$('body').append('<div id="intro">Click to start</div>');
-	$('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) 
+	// $('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) 
+	$('#intro').css({width: WIDTH, height: HEIGHT}).one('mouseenter', function(e) 
 	{
 		e.preventDefault();
 		$(this).fadeOut();
@@ -140,7 +140,7 @@ function init()
 	//scene.fog = new THREE.FogExp2(0xD6F1FF, 0.0005); // color, density
 	
 	// Set up camera
-	cam = new THREE.PerspectiveCamera(40, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
+	cam = new THREE.PerspectiveCamera(70, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
 	cam.position.y = 130;
 	cam.position.x = 0;
 	cam.position.z = -1125;
@@ -226,6 +226,7 @@ function update()
 	}
 }
 // Update and display
+<<<<<<< HEAD
 function render() 
 {
 	var player1Health = $('.health-bar').data('value');
@@ -245,6 +246,10 @@ function render()
 			location = location;
 		});
 	}
+=======
+function render() {
+
+>>>>>>> bc1c0fb7f24f54857949f5f98879512605a1c4dc
 	var delta = clock.getDelta();
 	var speed = delta * BULLET_SPEED;
 
@@ -377,6 +382,7 @@ function render()
 		arrowDir.setDirection(raycaster.ray.direction);
 	}
 
+<<<<<<< HEAD
 	let newArrowDir = scene.getObjectByName("newArrowDir");
 	if(newArrowDir)
 	{
@@ -409,6 +415,28 @@ function render()
 		scene.add(line);
 	}
 
+=======
+	if(player1.bow) {
+
+		let dir = raycaster.ray.direction;
+		let axis = new THREE.Vector3();
+
+		if ( dir.y > 0.99999 ) {
+			// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
+			player1.bow.quaternion.set( 0, 0, 0, 1 );
+		} else if ( dir.y < -0.99999 ) {
+			// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
+			player1.bow.quaternion.set( 1, 0, 0, 0 );
+		} else {
+			axis.set(dir.z, 0, -dir.x).normalize();
+
+			// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+			player1.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+		}
+	}
+
+	player1.update();
+>>>>>>> bc1c0fb7f24f54857949f5f98879512605a1c4dc
 	
 	cameraCube.rotation.copy( cam.rotation );
 	//cameraCube.rotation.y += .001;
@@ -477,6 +505,7 @@ function setupScene()
 	var arrowMark = new THREE.ArrowHelper(
 		new THREE.Vector3(0,0,1), new THREE.Vector3(0,130,-1125), 1000, 0x884400);
 	arrowMark.name = "arrowDir";
+<<<<<<< HEAD
 	//scene.add(arrowMark);
 
 
@@ -506,6 +535,9 @@ line.name = "newArrowDir";
 //scene.add(line);// smooth my curve over this many points
 
 
+=======
+	scene.add(arrowMark);
+>>>>>>> bc1c0fb7f24f54857949f5f98879512605a1c4dc
 						
 	// Lighting
 	var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
@@ -567,23 +599,13 @@ line.name = "newArrowDir";
 
 function initPlayers() 
 {
-	// Add player one's bow object to scene
+	// Initialize player one's bow object
 	var bow1 = new THREE.Object3D();
 	bow1.name = "bow1";		
-	bow1.position.y = -25;
-	bow1.position.x = 0;
-	bow1.position.z = -36;
-	scene.add(bow1);
-
-	// Add player one's bow object to scene
+	
+	// Initialize player two's bow object
 	var bow2 = new THREE.Object3D();
-	bow2.name = "bow2";		
-	bow2.position.y = -25;
-	bow2.position.x = 0;
-	bow2.position.z = -36;
-	scene.add(bow2);
-
-	console.log(scene.children);
+	bow2.name = "bow2";
 
 	// Load the PLY model for the bows and assign the meshes to their corresponding objects.
 	loader.load( 'models/bow.ply', function ( geometry ) {
@@ -592,32 +614,35 @@ function initPlayers()
 		var material = new THREE.MeshStandardMaterial( { color: 0x7c440b, flatShading: true } );
 		var mesh = new THREE.Mesh( geometry, material );
 		mesh.rotateZ(1.5708);
+		mesh.rotateY(2 * 1.5708);
 		mesh.scale.multiplyScalar( .35 );
 
-		let parent1 = scene.getObjectByName("bow1");
-		if(parent1) {
-			parent1.add(mesh);
-		}		
+		if(player1.bow) {
+			player1.bow.add(mesh);
+		}
 
-		let parent2 = scene.getObjectByName("bow2");
-		if(parent2) {
-			parent2.add(mesh);
+		if(player2.bow) {
+			player2.bow.add(mesh.clone());
 		}
 	});
 
 	// Add player one
-	player1 = new Player(0xff0000, new THREE.Vector3(0, 84, -1125), new THREE.Euler(0, 0, 0));
-	player1.leftHandDummy.add(scene.getObjectByName("bow1"));
+	player1 = new Player(0xff0000, new THREE.Vector3(0, 84, -1125), new THREE.Euler(0, 0, 0), bow1);
 	
+<<<<<<< HEAD
 	players.push(player1.torso,player1.head,player1.leftShoulder,player1.rightShoulder,player1.leftArm
 	,player1.rightArm,player1.rightHand,player1.leftHand,player1.lowerTorso,player1.waist,player1.leftThigh
 	,player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot);
 	scene.add(player1.torsoDummy);
+=======
+	players.push(player1);
+	scene.add(player1.playerDummy);
+>>>>>>> bc1c0fb7f24f54857949f5f98879512605a1c4dc
 
 	// Add player two
-	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0));
-	player2.leftHandDummy.add(scene.getObjectByName("bow2"));
+	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
 
+<<<<<<< HEAD
 	players.push(player2.torso,player2.head,player2.leftShoulder,player2.rightShoulder,player2.leftArm
 	,player2.rightArm,player2.rightHand,player2.leftHand,player2.lowerTorso,player2.waist,player2.leftThigh
 	,player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot);
@@ -625,6 +650,10 @@ function initPlayers()
 
 	console.log(player1.leftHandDummy.children);
 	console.log(player2.leftHandDummy.children);
+=======
+	players.push(player2);
+	scene.add(player2.playerDummy);
+>>>>>>> bc1c0fb7f24f54857949f5f98879512605a1c4dc
 }
 
 function distance(x1, y1, x2, y2) { return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));}
@@ -645,9 +674,14 @@ function onDocumentMouseDown(e) {
 	// Reset the power and arrow speed.
 	//console.log(raycaster.ray.origin);
 	pow = .1;
+<<<<<<< HEAD
 	ARROW_SPEED = 1;
 	$('.power').css({width: 0+"%",});
 	$('.power-bar').css({value: 0,});
+=======
+	ARROWSPEED = 1;
+	
+>>>>>>> bc1c0fb7f24f54857949f5f98879512605a1c4dc
 	// Prevent infinite loop.
 	if(mousedownID == -1) {
 		mousedownID = setInterval(whileMouseDown, 100 /*execute every 100ms*/);
@@ -716,12 +750,18 @@ function onDocumentMouseUp(e) {
 		mesh3.position.y = 100;
 		mesh3.position.x = -100;
 		mesh3.position.z = 900;
+<<<<<<< HEAD
 		//mesh3.rotation.z += (1.5708); 
 		mesh3.rotation = raycaster.ray.direction;
 		mesh3.scale.multiplyScalar( 10.0 );
 		mesh3.scale.x = 4;
 		mesh3.castShadow = true;
 		mesh3.receiveShadow = true;
+=======
+
+		mesh3.rotation.z += (1.5708); 
+		mesh3.scale.multiplyScalar( 10.0 );
+>>>>>>> bc1c0fb7f24f54857949f5f98879512605a1c4dc
 
 		var ballShape = new Ammo.btSphereShape( ballRadius );
 		ballShape.setMargin( margin );
@@ -735,10 +775,16 @@ function onDocumentMouseUp(e) {
 		pos.copy( raycaster.ray.direction );
 		pos.multiplyScalar( 24 );
 		
+<<<<<<< HEAD
 		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+=======
+		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );	
+
+		$('.power').css({width: 0+"%",});
+		$('.power-bar').css({value: 0,});
+>>>>>>> bc1c0fb7f24f54857949f5f98879512605a1c4dc
 	});
 }
-
 
 // Handle window resizing
 $(window).resize(function() 
@@ -762,7 +808,7 @@ $(window).resize(function()
 
 // Stop moving around when the window is unfocused (keeps my sanity!)
 $(window).focus(function() {
-	if (controls) controls.freeze = false; 
+	// if (controls) controls.freeze = false; 
 });
 $(window).blur(function() {
 	if (controls) controls.freeze = true;
