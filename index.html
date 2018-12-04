@@ -779,11 +779,11 @@ function onDocumentMouseUp(e) {
 		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );	
 		$('.power').css({width: 0+"%",});
 		$('.power-bar').css({value: 0,});
-		player1.rightHandDummy.position.set(-.6, -32, -36);
-		player1.rightArmDummy.rotation.set(0, 0, -.2);
-		player1.rightElbowDummy.rotation.set(0, 0, .2);
-		player1.rightElbow.rotation.set(0, 0, 0);
-		player1.leftShoulderDummy.rotation.set(0, 0, -.6);
+		activePlayer.rightHandDummy.position.set(-.6, -32, -36);
+		activePlayer.rightArmDummy.rotation.set(0, 0, -.2);
+		activePlayer.rightElbowDummy.rotation.set(0, 0, .2);
+		activePlayer.rightElbow.rotation.set(0, 0, 0);
+		activePlayer.leftShoulderDummy.rotation.set(0, 0, -.6);
 	});
 }
 
