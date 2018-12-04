@@ -65,7 +65,7 @@ var ARROW_SPEED = 1;
 var GRAVITY = 9.81;
 
 // Global vars
-var scene, cam, backgroundScene, backgroundCamera, renderer, controls, clock, projector, model, skin;
+var scene, backgroundScene, backgroundCamera, renderer, controls, clock, projector, model, skin;
 var runAnim = true;
 var mouseCoords = new THREE.Vector2();
 var container, stats;
@@ -80,8 +80,15 @@ var testArrow;
 // Holds the Player objects for our game.
 var players = [];
 
+var activePlayer;
+
 var player1;
 var player2;
+
+var cam1;
+var cam2;
+
+var cam1Active = true;
 
 // Physics variables
 var collisionConfiguration;
@@ -138,21 +145,21 @@ function init()
 	//scene.fog = new THREE.FogExp2(0xD6F1FF, 0.0005); // color, density
 	
 	// Set up camera
-	cam = new THREE.PerspectiveCamera(70, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
-	cam.position.y = 130;
-	cam.position.x = 0;
-	cam.position.z = -1125;
-	cam.lookAt(new THREE.Vector3( 0, 84, 1125 ));
-	scene.add(cam);
-	
-	// Camera moves with mouse, flies around with WASD/arrow keys
-	controls = new THREE.FirstPersonControls(cam);
-	controls.freeze = true;
-	controls.movementSpeed = 600;
-	controls.lookSpeed = .15;
-	
-	controls.lookVertical = true; // Temporary solution; play on flat surfaces only
-	controls.noFly = true;
+	// cam = new THREE.PerspectiveCamera(70, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
+
+	cam1 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
+	cam1.position.y = 125;
+	cam1.position.x = 0;
+	cam1.position.z = -1325;
+	cam1.lookAt(new THREE.Vector3( 0, -100, 825 ));
+	scene.add(cam1);
+
+	cam2 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
+	cam2.position.y = 125;
+	cam2.position.x = 0;
+	cam2.position.z = 1325;
+	cam2.lookAt(new THREE.Vector3( 0, -100, -825 ));
+	scene.add(cam2);
 	
 	// World objects
 	setupScene();
@@ -207,7 +214,6 @@ function render() {
 	var delta = clock.getDelta();
 	var speed = delta * BULLET_SPEED;
 
-	controls.update(delta); // Move camera
 	updatePhysics( speed );
 	
 	for (let index = 0; index < rigidBodies.length; index++) 
@@ -222,7 +228,7 @@ function render() {
 	let arrowDir = scene.getObjectByName("arrowDir");
 	if(arrowDir)
 	{
-		raycaster.setFromCamera( mouseCoords, cam );
+		raycaster.setFromCamera( mouseCoords, cam1);
 		arrowDir.setDirection(raycaster.ray.direction);
 	}
 
@@ -245,7 +251,15 @@ function render() {
 	renderer.autoClear = false;
 	renderer.clear();
 	renderer.render(backgroundScene, backgroundCamera)
-	renderer.render(scene, cam); // Repaint
+
+	if(cam1Active) {
+		renderer.render(scene, cam1); // Repaint
+	} else {
+		renderer.render(scene, cam2); // Repaint
+	}
+
+
+
 	time += delta;
 }
 
@@ -372,11 +386,16 @@ function initPlayers() {
 	players.push(player1);
 	scene.add(player1.playerDummy);
 
+
+
 	// Add player two
 	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
 
 	players.push(player2);
 	scene.add(player2.playerDummy);
+
+	activePlayer = player1;
+	console.log(activePlayer);
 }
 
 function distance(x1, y1, x2, y2) { 
@@ -404,6 +423,9 @@ function onDocumentMouseDown(e) {
 	if(mousedownID == -1) {
 		mousedownID = setInterval(whileMouseDown, 100 /*execute every 100ms*/);
 	}  
+
+	//TODO: Remove
+	cam1Active = !cam1Active;
 }
 
 function whileMouseDown() {
@@ -438,10 +460,7 @@ function whileMouseDown() {
 	// Make the player's arm pull back on the string
 	if(player1.rightHandDummy.position.y > -50.9999) {
 		player1.rightHandDummy.position.y -= .7;	
-		// player1.rightHandDummy.position.y = -56;
-	}// else {
-		// player1.rightHandDummy.position.y -= .4;	
-	// }
+	}
 
 	if(player1.leftShoulderDummy.rotation.z < -.079999) {
 		player1.leftShoulderDummy.rotateZ(.02);
@@ -473,7 +492,7 @@ function onDocumentMouseUp(e) {
 	  mousedownID = -1;
 	}
 	
-	raycaster.setFromCamera( mouseCoords, cam );
+	raycaster.setFromCamera( mouseCoords, cam1 );
 	
 	// Creates a ball and throws it
 	var ballMass = 1;
@@ -533,9 +552,9 @@ $(window).resize(function()
 	
 	ASPECT_RATIO = WIDTH / HEIGHT;
 	
-	if (cam) {
-		cam.aspect = ASPECT_RATIO;
-		cam.updateProjectionMatrix();
+	if (cam1) {
+		cam1.aspect = ASPECT_RATIO;
+		cam1.updateProjectionMatrix();
 	}
 
 	if (renderer) {
