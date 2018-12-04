@@ -13,6 +13,7 @@ var Player = function(_color, _position, _rotation, _bow) {
 
 	let middle = new THREE.Object3D();
 	middle.position.set(-.7, -20, -38);
+	middle.name = "middle";
 
 	// TODO: Remove this. It's for testing
 	middle.add(new THREE.Mesh( new THREE.CubeGeometry(1,2.5,1), new THREE.MeshPhongMaterial({color: 0x55ff00})));
@@ -66,11 +67,13 @@ var Player = function(_color, _position, _rotation, _bow) {
 
 	this.upperTorso = new THREE.Mesh(new THREE.CubeGeometry(7, 8, 15), this.material);
 	// this.upperTorso.position.set(0,8,0);
-	this.upperTorsoDummy.add(this.upperTorso);
 
-	// this.head = new THREE.Mesh(new THREE.CubeGeometry(6, 7, 6), this.material);
-	// this.head.position.set(0, 6, 0);
-	// this.upperTorsoDummy.add(this.head);
+	this.upperTorsoDummy.add(this.upperTorso);
+	console.log(this.upperTorso.position);
+
+	this.head = new THREE.Mesh(new THREE.CubeGeometry(6, 7, 6), this.material);
+	this.head.position.set(0, 6, 0);
+	this.upperTorsoDummy.add(this.head);
 
 	this.rightHandDummy = new THREE.Object3D();
 	this.rightHandDummy.position.set(-.6, -32, -36);
