@@ -418,11 +418,16 @@ function render()
 		}
 	}
 	
-	cameraCube.rotation.copy( cam.rotation );
-	renderer.autoClear = false;
-	renderer.gammaOutput = true;
-	renderer.clear();
-	renderer.render(backgroundScene, cameraCube);
+	
+	if(cam1Active) {
+		cam = cam1;
+		raycaster.setFromCamera( mouseCoords, cam);
+	//	renderer.render(scene, cam1); // Repaint
+	} else {
+		cam = cam2;
+		raycaster.setFromCamera( mouseCoords, cam);
+		//renderer.render(scene, cam2); // Repaint
+	}
 
 
 	// if(mouseCoords.x > 0.5) {
@@ -439,6 +444,13 @@ function render()
 	// }
 	if(cam.position.z < 0)
 	{
+		cameraCube.rotation.y += wind.x * 0.0001;
+		cameraCube.rotation.z = ( cam.rotation.z );
+		cameraCube.rotation.x = ( cam.rotation.x );
+		renderer.autoClear = false;
+		renderer.gammaOutput = true;
+		renderer.clear();
+		renderer.render(backgroundScene, cameraCube);
 			if(activePlayer.bow) {
 			let dir = raycaster.ray.direction;
 			let axis = new THREE.Vector3();
@@ -457,7 +469,13 @@ function render()
 	}
 	else
 	{
-		
+		cameraCube.rotation.y += wind.x * 0.0001;
+		cameraCube.rotation.z = ( cam.rotation.z );
+		cameraCube.rotation.x = ( cam.rotation.x );
+		renderer.autoClear = false;
+		renderer.gammaOutput = true;
+		renderer.clear();
+		renderer.render(backgroundScene, cameraCube);
 		if(activePlayer.bow) {
 			let dir = raycaster.ray.direction;
 			let axis = new THREE.Vector3();
