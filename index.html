@@ -459,20 +459,15 @@ function render()
 		let axis = new THREE.Vector3();
 
 		if ( dir.y > 0.99999 ) {
-			// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
 			player1.bow.quaternion.set( 0, 0, 0, 1 );
 		} else if ( dir.y < -0.99999 ) {
-			// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
 			player1.bow.quaternion.set( 1, 0, 0, 0 );
 		} else {
 			axis.set(dir.z, 0, -dir.x).normalize();
 
-			// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
 			player1.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
 		}
 	}
-
-	player1.update();
 	
 	cameraCube.rotation.copy( cam.rotation );
 	//cameraCube.rotation.y += .001;
@@ -485,8 +480,8 @@ function render()
 }
 
 // Set up the objects in the world
-function setupScene() 
-{
+function setupScene() {
+
 	// Initialize the floor
 	var floorGeo = new THREE.CubeGeometry(mapW * UNIT_SIZE, 10, mapW * UNIT_SIZE);
 	floorGeo.computeVertexNormals();
@@ -597,8 +592,8 @@ function setupScene()
 	//backgroundScene.add(backgroundMesh);
 }
 
-function initPlayers() 
-{
+function initPlayers() {
+
 	// Initialize player one's bow object
 	var bow1 = new THREE.Object3D();
 	bow1.name = "bow1";		
@@ -628,8 +623,8 @@ function initPlayers()
 	// Add player one
 	player1 = new Player(0xff0000, new THREE.Vector3(0, 84, -1125), new THREE.Euler(0, 0, 0), bow1);
 
-	player1HitBoxes.push(player1.upperTorso,player1.head,player1.leftShoulder,player1.rightShoulder,player1.leftArm
-	,player1.rightArm,player1.rightHand,player1.leftHand,player1.lowerTorso,player1.waist,player1.leftThigh
+	player1HitBoxes.push(player1.upperTorso,player1.leftShoulder,player1.rightShoulder,player1.leftArm
+	,player1.rightArm,player1.rightHand,player1.leftHand,player1.waist,player1.leftThigh
 	,player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot);
 	players.push(player1);
 	scene.add(player1.playerDummy);
@@ -638,14 +633,16 @@ function initPlayers()
 	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
 
 
-	player2HitBoxes.push(player2.upperTorso,player2.head,player2.leftShoulder,player2.rightShoulder,player2.leftArm
-	,player2.rightArm,player2.rightHand,player2.leftHand,player2.lowerTorso,player2.waist,player2.leftThigh
+	player2HitBoxes.push(player2.upperTorso,player2.leftShoulder,player2.rightShoulder,player2.leftArm
+	,player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh
 	,player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot);
 	players.push(player2);
 	scene.add(player2.playerDummy);
 }
 
-function distance(x1, y1, x2, y2) { return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));}
+function distance(x1, y1, x2, y2) { 
+	return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)); 
+}
 
 function getMapSector(v) {
 	var x = Math.floor((v.x + UNIT_SIZE / 2) / UNIT_SIZE + mapW/2);
@@ -703,10 +700,32 @@ function whileMouseDown() {
     // Update the data of the CSS.
 	$('.power').css({width: hitWidth,});
 	$('.power-bar').css({value: newValue,});
+
+	// Make the player's arm pull back on the string
+	if(player1.rightHandDummy.position.y > -50.9999) {
+		player1.rightHandDummy.position.y -= .7;	
+		// player1.rightHandDummy.position.y = -56;
+	}// else {
+		// player1.rightHandDummy.position.y -= .4;	
+	// }
+
+	if(player1.leftShoulderDummy.rotation.z < -.079999) {
+		player1.leftShoulderDummy.rotateZ(.02);
+	}
+
+	if(player1.rightArmDummy.rotation.z > -.42999) {
+		player1.rightArmDummy.rotateZ(-.01);
+		player1.rightElbow.rotateZ(-.03);
+	}
+
+	if(player1.rightElbowDummy.rotation.z < 2.1) {
+		player1.rightElbowDummy.rotateZ(.07);
+	}
+
+
 }
 
-function onDocumentMouseMove(e)
-{
+function onDocumentMouseMove(e) {
 	mouseCoords.set(
 		 ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
 		-( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
@@ -726,7 +745,6 @@ function onDocumentMouseUp(e) {
 	var ballMass = 1;
 	var ballRadius = 2;
 
-	var loader = new THREE.PLYLoader();
 	loader.load( 'models/Arrow.ply', function ( geometry ) {
 		geometry.computeVertexNormals();
 		var material = new THREE.MeshStandardMaterial( { color: 0x130d06, flatShading: true } );
@@ -759,6 +777,20 @@ function onDocumentMouseUp(e) {
 		$('.power').css({width: 0+"%",});
 		$('.power-bar').css({value: 0,});
 	});
+
+
+	// Reset the player's right arm
+	console.log(player1.rightHandDummy.position);
+	console.log(player1.rightElbowDummy.rotation.z);
+	console.log(player1.rightArmDummy.rotation.z);
+	console.log(player1.leftShoulderDummy.rotation.z);
+	player1.rightHandDummy.position.set(-.6, -32, -36);
+	player1.rightArmDummy.rotation.set(0, 0, -.2);
+	player1.rightElbowDummy.rotation.set(0, 0, .2);
+	player1.rightElbow.rotation.set(0, 0, 0);
+	player1.leftShoulderDummy.rotation.set(0, 0, -.6);
+
+
 }
 
 // Handle window resizing
@@ -826,9 +858,7 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 	body.setFriction( 0.5 );
 
 	if ( vel ) {
-		
 		body.setLinearVelocity( new Ammo.btVector3( vel.x, vel.y, vel.z ) );
-		
 	}
 	
 	if ( angVel ) {
@@ -881,7 +911,7 @@ function updatePhysics( deltaTime )
 			var q = transformAux1.getRotation();
 			
 			objThree.position.set(p.x(), p.y(), p.z());
-			objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+			//objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
 			if(cam.position.z < 0)
 			{
 				objThree.rotation.y = (4.7124);
