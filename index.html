@@ -429,19 +429,6 @@ function render()
 		//renderer.render(scene, cam2); // Repaint
 	}
 
-
-	// if(mouseCoords.x > 0.5) {
-	// 	activePlayer.aimDummy.rotateZ(.01);
-	// }
-	// if(mouseCoords.x < -0.5) {
-	// 	activePlayer.aimDummy.rotateZ(-.01);
-	// }
-	// if(mouseCoords.y > 0.5) {
-	// 	activePlayer.aimDummy.rotateX(-.01);
-	// }
-	// if(mouseCoords.y < -0.5) {
-	// 	activePlayer.aimDummy.rotateX(.01);
-	// }
 	if(cam.position.z < 0)
 	{
 		cameraCube.rotation.y += wind.x * 0.0001;
@@ -480,14 +467,11 @@ function render()
 			let dir = raycaster.ray.direction;
 			let axis = new THREE.Vector3();
 			if ( dir.y > 0.99999 ) {
-				// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
 				activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
 			} else if ( dir.y < -0.99999 ) {
-				// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
 				activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
 			} else {
 				axis.set(-dir.z, 0, dir.x).normalize();
-				// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
 				activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
 			}
 		}
@@ -654,7 +638,7 @@ function initPlayers() {
 
 	player1HitBoxes.push(player1.upperTorso,player1.leftShoulder,player1.rightShoulder,player1.leftArm
 	,player1.rightArm,player1.rightHand,player1.leftHand,player1.waist,player1.leftThigh,player1.head,
-	player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot,player1.leftElbow,player1.rightElbow,player1.lowerTorso);
+	player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot,player1.leftElbow,player1.rightElbow,player1.lowerTorso, player1.upperTorsoDummy);
 	players.push(player1);
 	scene.add(player1.playerDummy);
 
@@ -664,7 +648,7 @@ function initPlayers() {
 
 	player2HitBoxes.push(player2.upperTorso,player2.leftShoulder,player2.rightShoulder,player2.leftArm
 	,player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh,player2.head,
-	player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot,player2.leftElbow,player2.rightElbow,player2.lowerTorso);
+	player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot,player2.leftElbow,player2.rightElbow,player2.lowerTorso, player2.upperTorsoDummy);
 	players.push(player2);
 	scene.add(player2.playerDummy);
 

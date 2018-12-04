@@ -152,7 +152,8 @@ p {
   cursor: pointer;
   font-size: 32px;
   opacity: 0.7;
-  padding: 120px;
+  display: inline-block;
+  padding-top: 450px;
   text-align: center;
   z-index: 1001;
 }

@@ -12,23 +12,25 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.bow.position.set(-2, 100, 50);
 	this.bow.scale.set(1.85, 1.85, 1.85);
 
+
 	let middle = new THREE.Object3D();
 	middle.position.set(-.7, -20, -38);
 	middle.name = "middle";
 
 	// TODO: Remove this. It's for testing
-	middle.add(new THREE.Mesh( new THREE.CubeGeometry(1,2.5,1), new THREE.MeshPhongMaterial({color: 0x55ff00})));
+	// middle.add(new THREE.Mesh( new THREE.CubeGeometry(1,2.5,1), new THREE.MeshPhongMaterial({color: 0x55ff00})));
 
 	this.bow.add(middle);
 
 	this.playerDummy = new THREE.Object3D();
 	this.playerDummy.position.copy(_position);
 	this.playerDummy.rotation.copy(_rotation);
+	this.playerDummy.scale.set(1.5,1.5,1.5);
 
 	this.aimDummy = new THREE.Object3D();
 	this.aimDummy.position.set(0, 10, 0);
 	this.aimDummy.rotateX(1.5708);
-	this.aimDummy.add(new THREE.Mesh(new THREE.CubeGeometry(2, 2, 2), this.material));
+	// this.aimDummy.add(new THREE.Mesh(new THREE.CubeGeometry(2, 2, 2), this.material));
 	this.playerDummy.add(this.aimDummy);
 
 	this.aimDummy.add(this.bow);
