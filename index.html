@@ -270,9 +270,14 @@ function render()
 		{
 
 			cam1Active = !cam1Active;
+			if(activePlayer == player1) {
+							activePlayer = player2;
+						} else {
+							activePlayer = player1;
+						}
 			scene.remove(thisArrow);
 			rigidBodies.shift();
-			continue;
+			break;
 		}
 		if(rigidBodies[index])
 		{
@@ -408,6 +413,11 @@ function render()
 					
 					}
 						cam1Active = !cam1Active;
+						if(activePlayer == player1) {
+							activePlayer = player2;
+						} else {
+							activePlayer = player1;
+						}
 						rigidBodies.shift();
 				}
 			}
@@ -441,19 +451,19 @@ function render()
 		arrowDir.setDirection(raycaster.ray.direction);
 	}
 
-	if(player1.bow) {
+	if(activePlayer.bow) {
 
 		let dir = raycaster.ray.direction;
 		let axis = new THREE.Vector3();
 
 		if ( dir.y > 0.99999 ) {
-			player1.bow.quaternion.set( 0, 0, 0, 1 );
+			activePlayer.bow.quaternion.set( 0, 0, 0, 1 );
 		} else if ( dir.y < -0.99999 ) {
-			player1.bow.quaternion.set( 1, 0, 0, 0 );
+			activePlayer.bow.quaternion.set( 1, 0, 0, 0 );
 		} else {
 			axis.set(dir.z, 0, -dir.x).normalize();
 
-			player1.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+			activePlayer.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
 		}
 	}
 	
@@ -470,8 +480,6 @@ function render()
 		cam = cam2;
 		renderer.render(scene, cam2); // Repaint
 	}
-
-
 
 	time += delta;
 }
@@ -626,8 +634,6 @@ function initPlayers() {
 	players.push(player1);
 	scene.add(player1.playerDummy);
 
-
-
 	// Add player two
 	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
 
@@ -669,8 +675,6 @@ function onDocumentMouseDown(e) {
 	if(mousedownID == -1) {
 		mousedownID = setInterval(whileMouseDown, 100 /*execute every 100ms*/);
 	}  
-
-	
 }
 
 function whileMouseDown() {
@@ -706,21 +710,21 @@ function whileMouseDown() {
 	$('.power-bar').css({value: newValue,});
 
 	// Make the player's arm pull back on the string
-	if(player1.rightHandDummy.position.y > -50.9999) {
-		player1.rightHandDummy.position.y -= .7;	
+	if(activePlayer.rightHandDummy.position.y > -50.9999) {
+		activePlayer.rightHandDummy.position.y -= .7;	
 	}
 
-	if(player1.leftShoulderDummy.rotation.z < -.079999) {
-		player1.leftShoulderDummy.rotateZ(.02);
+	if(activePlayer.leftShoulderDummy.rotation.z < -.079999) {
+		activePlayer.leftShoulderDummy.rotateZ(.02);
 	}
 
-	if(player1.rightArmDummy.rotation.z > -.42999) {
-		player1.rightArmDummy.rotateZ(-.01);
-		player1.rightElbow.rotateZ(-.03);
+	if(activePlayer.rightArmDummy.rotation.z > -.42999) {
+		activePlayer.rightArmDummy.rotateZ(-.01);
+		activePlayer.rightElbow.rotateZ(-.03);
 	}
 
-	if(player1.rightElbowDummy.rotation.z < 2.1) {
-		player1.rightElbowDummy.rotateZ(.07);
+	if(activePlayer.rightElbowDummy.rotation.z < 2.1) {
+		activePlayer.rightElbowDummy.rotateZ(.07);
 	}
 
 
@@ -764,7 +768,7 @@ function onDocumentMouseUp(e) {
 		
 		pos.copy( raycaster.ray.direction );
 		//pos.add( raycaster.ray.origin );
-		pos.add( player1.bow.getObjectByName("middle").getWorldPosition() );
+		pos.add( activePlayer.bow.getObjectByName("middle").getWorldPosition() );
 		
 		quat.set( 0, 0, 0, 1 );
 		
@@ -781,13 +785,6 @@ function onDocumentMouseUp(e) {
 		player1.rightElbow.rotation.set(0, 0, 0);
 		player1.leftShoulderDummy.rotation.set(0, 0, -.6);
 	});
-
-	// Reset the player's right arm
-	// console.log(player1.rightHandDummy.position);
-	// console.log(player1.rightElbowDummy.rotation.z);
-	// console.log(player1.rightArmDummy.rotation.z);
-	// console.log(player1.leftShoulderDummy.rotation.z);
-	
 }
 
 // Handle window resizing
@@ -871,7 +868,6 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 		body.setActivationState( 4 ); // Disable deactivation
 	}
 	
-	//https://stackoverflow.com/questions/18370701/how-to-draw-the-trajectory-of-a-mesh-with-threejs
 	physicsWorld.addRigidBody( body );
 
 	return body;
@@ -1019,7 +1015,6 @@ function updatePhysics( deltaTime )
 
 function initWind() {
 	wind = new THREE.Vector3(getRandomArbitrary(-2*Math.PI, 2*Math.PI), 1, getRandomArbitrary(-2*Math.PI, 2*Math.PI));
-	//console.log(wind.x,wind.y,wind.z);
 }
 
 function createRandomColor() {
