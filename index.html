@@ -403,8 +403,7 @@ function onDocumentMouseDown(e) {
 	//console.log(raycaster.ray.origin);
 	pow = .1;
 	ARROWSPEED = 1;
-	$('.power').css({width: 0+"%",});
-	$('.power-bar').css({value: 0,});
+	
 	// Prevent infinite loop.
 	if(mousedownID == -1) {
 		mousedownID = setInterval(whileMouseDown, 100 /*execute every 100ms*/);
@@ -487,6 +486,9 @@ function onDocumentMouseUp(e) {
 		pos.multiplyScalar( 24 );
 		
 		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );	
+
+		$('.power').css({width: 0+"%",});
+		$('.power-bar').css({value: 0,});
 	});
 }
 
