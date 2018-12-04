@@ -153,14 +153,14 @@ function init()
 	// cam = new THREE.PerspectiveCamera(70, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
 
 	cam1 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
-	cam1.position.y = 125;
+	cam1.position.y = 150;
 	cam1.position.x = 0;
 	cam1.position.z = -1325;
 	cam1.lookAt(new THREE.Vector3( 0, -100, 825 ));
 	scene.add(cam1);
 
 	cam2 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
-	cam2.position.y = 125;
+	cam2.position.y = 150;
 	cam2.position.x = 0;
 	cam2.position.z = 1325;
 	cam2.lookAt(new THREE.Vector3( 0, -100, -825 ));
@@ -245,8 +245,6 @@ function render()
 	var player1Health = $('.health-bar').data('value');
 	var player2Health = $('.health-bar2').data('value');
 	var total = $('.health-bar').data('total');
-	
-	
 	
 	if(player1Health <= 1 || player2Health <= 1)
 	{
@@ -427,21 +425,6 @@ function render()
 	let arrowDir = scene.getObjectByName("arrowDir");
 	raycaster.setFromCamera( mouseCoords, cam1 );
 	
-	if(player1.bow) {
-		let dir = raycaster.ray.direction;
-		let axis = new THREE.Vector3();
-		if ( dir.y > 0.99999 ) {
-			// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
-			player1.bow.quaternion.set( 0, 0, 0, 1 );
-		} else if ( dir.y < -0.99999 ) {
-			// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
-			player1.bow.quaternion.set( 1, 0, 0, 0 );
-		} else {
-			axis.set(dir.z, 0, -dir.x).normalize();
-			// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-			player1.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-		}
-	}
 
 	let newArrowDir = scene.getObjectByName("newArrowDir");
 	raycaster.setFromCamera( mouseCoords, cam1);
@@ -451,28 +434,29 @@ function render()
 		arrowDir.setDirection(raycaster.ray.direction);
 	}
 
-	if(activePlayer.bow) {
 
-		let dir = raycaster.ray.direction;
-		let axis = new THREE.Vector3();
-
-		if ( dir.y > 0.99999 ) {
-			activePlayer.bow.quaternion.set( 0, 0, 0, 1 );
-		} else if ( dir.y < -0.99999 ) {
-			activePlayer.bow.quaternion.set( 1, 0, 0, 0 );
-		} else {
-			axis.set(dir.z, 0, -dir.x).normalize();
-
-			activePlayer.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-		}
-	}
 	
 	cameraCube.rotation.copy( cam.rotation );
-	//cameraCube.rotation.y += .001;
 	renderer.autoClear = false;
 	renderer.gammaOutput = true;
 	renderer.clear();
 	renderer.render(backgroundScene, cameraCube);
+
+
+	if(mouseCoords.x > 0.5) {
+		activePlayer.aimDummy.rotateZ(.01);
+	}
+	if(mouseCoords.x < -0.5) {
+		activePlayer.aimDummy.rotateZ(-.01);
+	}
+	if(mouseCoords.y > 0.5) {
+		activePlayer.aimDummy.rotateX(-.01);
+	}
+	if(mouseCoords.y < -0.5) {
+		activePlayer.aimDummy.rotateX(.01);
+	}
+
+
 	if(cam1Active) {
 		cam = cam1;
 		renderer.render(scene, cam1); // Repaint
@@ -480,6 +464,7 @@ function render()
 		cam = cam2;
 		renderer.render(scene, cam2); // Repaint
 	}
+
 
 	time += delta;
 }
@@ -634,9 +619,9 @@ function initPlayers() {
 	players.push(player1);
 	scene.add(player1.playerDummy);
 
+
 	// Add player two
 	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
-
 
 	player2HitBoxes.push(player2.upperTorso,player2.leftShoulder,player2.rightShoulder,player2.leftArm
 	,player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh
@@ -675,6 +660,9 @@ function onDocumentMouseDown(e) {
 	if(mousedownID == -1) {
 		mousedownID = setInterval(whileMouseDown, 100 /*execute every 100ms*/);
 	}  
+
+	console.log(mouseCoords);
+
 }
 
 function whileMouseDown() {
