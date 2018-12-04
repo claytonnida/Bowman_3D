@@ -115,7 +115,7 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.upperTorsoDummy.add(this.lowerTorso);
 
 	this.waistDummy = new THREE.Object3D();
-	this.waistDummy.position.set(6, 0,0);
+	this.waistDummy.position.set(4.5, 0,0);
 	this.waistDummy.rotateY(-1.4);
 	this.playerDummy.add(this.waistDummy);
 
