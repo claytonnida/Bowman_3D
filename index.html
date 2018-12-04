@@ -210,7 +210,7 @@ function animate() {
 }
 function update()
 {
-	if(particleSystem)
+	if(particles.vertices.length > 0)
 	{//console.log(particles);
 		//console.log(particleSystem);
 		//particleSystem.rotation.y += 0.01;
@@ -222,8 +222,9 @@ function update()
 			 particle.z = getRandomArbitrary(particle.z - 1, particle.z + 1);
 		}
 		particles.verticesNeedUpdate = true;
-		if(particles.vertices[0].y < -100)
+		if(particles.vertices[0].y < -50)
 		{
+			particles = new THREE.Geometry();
 			scene.remove(scene.getObjectByName("particleSys"));
 		}
 	}
@@ -295,6 +296,8 @@ function render()
 							$('.hit').css({width: '0',});
 							$('.bar').css({width: barWidth + "%",});
 							}, 500);
+
+					
 						loader = new THREE.TextureLoader();
 						loader.load('textures/particle2.png', function( texture ){
 							var pMaterial = new THREE.PointsMaterial( {
@@ -326,7 +329,7 @@ function render()
 							particles,
 							pMaterial);
 							particleSystem.sortParticles = true;
-							console.log("new part");
+							
 							particleSystem.name = "particleSys";
 							scene.add(particleSystem);
 							
@@ -345,6 +348,8 @@ function render()
 							$('.hit2').css({width: '0',});
 							$('.bar2').css({width: barWidth + "%",});
 							}, 500);
+
+					
 						loader = new THREE.TextureLoader();
 						loader.load('textures/particle2.png', function( texture ){
 							var pMaterial = new THREE.PointsMaterial( {
@@ -375,7 +380,7 @@ function render()
 							particles,
 							pMaterial);
 							particleSystem.sortParticles = true;
-							console.log("new part");
+				
 							particleSystem.name = "particleSys";
 							scene.add(particleSystem);
 							
