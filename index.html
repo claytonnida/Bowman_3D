@@ -17,7 +17,6 @@
 	<script src="three.js-master/examples/js/ConvexObjectBreaker.js"></script>
 	<script src="three.js-master/examples/js/QuickHull.js"></script>
 	<script src="three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
-	<script src="three.js-master/examples/js/loaders/STLLoader.js"></script>
 	<script src="three.js-master/examples/js/loaders/PLYLoader.js"></script>
 	<script src="three.js-master/examples/js/geometries/hilbert3D.js"></script>
 	<script src='three.js-master/examples/js/lines/LineSegmentsGeometry.js'></script>
@@ -72,18 +71,17 @@ var runAnim = true;
 var mouseCoords = new THREE.Vector2();
 var container, stats;
 var textureLoader;
-var mouseCoords = new THREE.Vector2();
 var raycaster = new THREE.Raycaster();
 var ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } );
-var loader = new THREE.STLLoader();
+var loader = new THREE.PLYLoader();
 var mousedownID = -1;
 var pow = .1;
 var testArrow;
-var particleCount = 1800,
+var particleCount = 800,
     particles = new THREE.Geometry(),
     pMaterial = new THREE.PointsMaterial({
       color: 0xFFFFFF,
-      size: 20
+      size: 10
 	});
 var particleSystem;
 // Holds the Player objects for our game.
@@ -120,7 +118,8 @@ var impactNormal = new THREE.Vector3();
 $(document).ready(function() 
 {
 	$('body').append('<div id="intro">Click to start</div>');
-	$('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) 
+	// $('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) 
+	$('#intro').css({width: WIDTH, height: HEIGHT}).one('mouseenter', function(e) 
 	{
 		e.preventDefault();
 		$(this).fadeOut();
@@ -141,14 +140,16 @@ function init()
 	//scene.fog = new THREE.FogExp2(0xD6F1FF, 0.0005); // color, density
 	
 	// Set up camera
-	cam = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
+	cam = new THREE.PerspectiveCamera(70, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
 	cam.position.y = 130;
 	cam.position.x = 0;
 	cam.position.z = -1125;
+	cam.lookAt(new THREE.Vector3( 0, 84, 1125 ));
 	scene.add(cam);
 	
 	// Camera moves with mouse, flies around with WASD/arrow keys
 	controls = new THREE.FirstPersonControls(cam);
+	controls.freeze = true;
 	controls.movementSpeed = 600;
 	controls.lookSpeed = .15;
 	
@@ -216,12 +217,15 @@ function update()
 		for (let i = 0; i < particleCount; i++) 
 		{
 			var particle = particles.vertices[i];
-			
-			particle.x = Math.random() * 500 - 250;
-			particle.y = Math.random() * 500 - 250;
-			particle.z = Math.random() * 500 - 250;
+			particle.x = getRandomArbitrary(particle.x - 1, particle.x + 1);
+			 particle.y = getRandomArbitrary(particle.y - .8, particle.y);
+			 particle.z = getRandomArbitrary(particle.z - 1, particle.z + 1);
 		}
 		particles.verticesNeedUpdate = true;
+		if(particles.vertices[0].y < -100)
+		{
+			scene.remove(scene.getObjectByName("particleSys"));
+		}
 	}
 }
 // Update and display
@@ -272,9 +276,12 @@ function render()
 			
 				if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) 
 				{
+					//if(rigidBodies[0].position)
+					var arrowClone = rigidBodies[0].clone();
+					
+					//console.log(arrowClone);
 					//player1.torsoDummy.add(rigidBodies[index]);
 					//scene.remove(rigidBodies[index]);
-					rigidBodies.shift();
 					
 					if(cam.position.z > 0)
 					{
@@ -292,18 +299,20 @@ function render()
 						loader.load('textures/particle2.png', function( texture ){
 							var pMaterial = new THREE.PointsMaterial( {
 								color: 0xFF0000,
-								size: 20,
+								size: 2,
 								map: texture,
 								//blending: THREE.AdditiveBlending,
 								transparent: true
 							});
+						
 						for (var p = 0; p < particleCount; p++) {
 
 							// create a particle with random
 							// position values, -250 -> 250
-							var pX = Math.random() * 500 - 250,
-								pY = Math.random() * 500 - 250,
-								pZ = Math.random() * 500 - 250,
+							
+							var pX = getRandomArbitrary(arrowClone.position.x - 10, arrowClone.position.x + 10),
+								pY = getRandomArbitrary(arrowClone.position.y - 10, arrowClone.position.y + 10),
+								pZ = getRandomArbitrary(arrowClone.position.z - 10, arrowClone.position.z + 10),
 								particle = new THREE.Vector3(pX, pY, pZ);
 								particle.velocity = new THREE.Vector3(
 								0,				// x
@@ -312,13 +321,17 @@ function render()
 							// add it to the geometry
 							particles.vertices.push(particle);
 							}
+							
 							particleSystem = new THREE.Points(
 							particles,
 							pMaterial);
 							particleSystem.sortParticles = true;
+							console.log("new part");
+							particleSystem.name = "particleSys";
 							scene.add(particleSystem);
 							
 						});
+						
 					}
 					else
 					{
@@ -336,18 +349,19 @@ function render()
 						loader.load('textures/particle2.png', function( texture ){
 							var pMaterial = new THREE.PointsMaterial( {
 								color: 0xFF0000,
-								size: 20,
+								size: 2,
 								map: texture,
 								//blending: THREE.AdditiveBlending,
 								transparent: true
 							});
+						
 						for (var p = 0; p < particleCount; p++) {
 
 							// create a particle with random
 							// position values, -250 -> 250
-							var pX = Math.random() * 500 - 250,
-								pY = Math.random() * 500 - 250,
-								pZ = Math.random() * 500 - 250,
+							var pX = getRandomArbitrary(arrowClone.position.x - 10, arrowClone.position.x + 10),
+								pY = getRandomArbitrary(arrowClone.position.y - 10, arrowClone.position.y + 10),
+								pZ = getRandomArbitrary(arrowClone.position.z - 10, arrowClone.position.z + 10),
 								particle = new THREE.Vector3(pX, pY, pZ);
 								particle.velocity = new THREE.Vector3(
 								0,				// x
@@ -356,17 +370,22 @@ function render()
 							// add it to the geometry
 							particles.vertices.push(particle);
 							}
+							
 							particleSystem = new THREE.Points(
 							particles,
 							pMaterial);
 							particleSystem.sortParticles = true;
+							console.log("new part");
+							particleSystem.name = "particleSys";
 							scene.add(particleSystem);
 							
 						});
+					
 					}
-				
+						rigidBodies.pop();
 				}
 			}
+			
 		}
 	}
 	let arrowDir = scene.getObjectByName("arrowDir");
@@ -387,7 +406,7 @@ function render()
 			player1.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
 		}
 	}
-	
+
 	let newArrowDir = scene.getObjectByName("newArrowDir");
 	if(newArrowDir)
 	{
@@ -420,7 +439,27 @@ function render()
 		scene.add(line);
 	}
 
+	if(player1.bow) {
+
+		let dir = raycaster.ray.direction;
+		let axis = new THREE.Vector3();
+
+		if ( dir.y > 0.99999 ) {
+			// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
+			player1.bow.quaternion.set( 0, 0, 0, 1 );
+		} else if ( dir.y < -0.99999 ) {
+			// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
+			player1.bow.quaternion.set( 1, 0, 0, 0 );
+		} else {
+			axis.set(dir.z, 0, -dir.x).normalize();
+
+			// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+			player1.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+		}
+	}
+
 	player1.update();
+	
 	cameraCube.rotation.copy( cam.rotation );
 	//cameraCube.rotation.y += .001;
 	renderer.autoClear = false;
@@ -484,38 +523,6 @@ function setupScene()
 					mesh2.receiveShadow = true;
 					scene.add( mesh2 );
 				} );
-
-	var arrowMark = new THREE.ArrowHelper(
-		new THREE.Vector3(0,0,1), new THREE.Vector3(0,130,-1125), 1000, 0x884400);
-	arrowMark.name = "arrowDir";
-	//scene.add(arrowMark);
-
-
-// smooth my curve over this many points
-var numPoints = 100;
-
-spline = new THREE.SplineCurve3([
-   new THREE.Vector3(0,129,-1125),
-   new THREE.Vector3(0,129,-1125)
-  
-]);
-
-var material = new THREE.LineBasicMaterial({
-	color: 0xff00f0,
-	linewidth: 50,
-});
-
-var geometry = new THREE.Geometry();
-var splinePoints = spline.getPoints(numPoints);
-
-for(var i = 0; i < splinePoints.length; i++){
-    geometry.vertices.push(splinePoints[i]);  
-}
-
-var line = new THREE.Line(geometry, material);
-line.name = "newArrowDir";
-//scene.add(line);// smooth my curve over this many points
-
 
 						
 	// Lighting
@@ -594,13 +601,16 @@ function initPlayers()
 		mesh.rotateZ(1.5708);
 		mesh.rotateY(2 * 1.5708);
 		mesh.scale.multiplyScalar( .35 );
+
 		if(player1.bow) {
 			player1.bow.add(mesh);
 		}
+
 		if(player2.bow) {
 			player2.bow.add(mesh.clone());
 		}
 	});
+
 	// Add player one
 	player1 = new Player(0xff0000, new THREE.Vector3(0, 84, -1125), new THREE.Euler(0, 0, 0), bow1);
 
@@ -611,6 +621,7 @@ function initPlayers()
 
 	// Add player two
 	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
+
 
 	players.push(player2.upperTorso,player2.head,player2.leftShoulder,player2.rightShoulder,player2.leftArm
 	,player2.rightArm,player2.rightHand,player2.leftHand,player2.lowerTorso,player2.waist,player2.leftThigh
@@ -632,6 +643,7 @@ function checkWallCollision(v) {
 }
 
 function onDocumentMouseDown(e) {
+
 	// Reset the power and arrow speed.
 	//console.log(raycaster.ray.origin);
 	pow = .1;
@@ -676,6 +688,7 @@ function whileMouseDown() {
 	$('.power').css({width: hitWidth,});
 	$('.power-bar').css({value: newValue,});
 }
+
 function onDocumentMouseMove(e)
 {
 	mouseCoords.set(
@@ -683,23 +696,20 @@ function onDocumentMouseMove(e)
 		-( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
 	);
 }
+
 function onDocumentMouseUp(e) {
 	if(mousedownID != -1) 
 	{  //Only stop if exists
 	  clearInterval(mousedownID);
 	  mousedownID = -1;
 	}
-  	
-  	mouseCoords.set(
-		 ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
-		-( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
-	);
 	
 	raycaster.setFromCamera( mouseCoords, cam );
 	
 	// Creates a ball and throws it
 	var ballMass = 1;
 	var ballRadius = 2;
+
 	var loader = new THREE.PLYLoader();
 	loader.load( 'models/Arrow.ply', function ( geometry ) {
 		geometry.computeVertexNormals();
@@ -727,10 +737,12 @@ function onDocumentMouseUp(e) {
 		pos.copy( raycaster.ray.direction );
 		pos.multiplyScalar( 24 );
 		
-		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );	
+
+		$('.power').css({width: 0+"%",});
+		$('.power-bar').css({value: 0,});
 	});
 }
-
 
 // Handle window resizing
 $(window).resize(function() 
@@ -754,7 +766,7 @@ $(window).resize(function()
 
 // Stop moving around when the window is unfocused (keeps my sanity!)
 $(window).focus(function() {
-	if (controls) controls.freeze = false; 
+	// if (controls) controls.freeze = false; 
 });
 $(window).blur(function() {
 	if (controls) controls.freeze = true;
@@ -817,28 +829,7 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 	
 	//https://stackoverflow.com/questions/18370701/how-to-draw-the-trajectory-of-a-mesh-with-threejs
 	physicsWorld.addRigidBody( body );
-	// var arrowMark = new THREE.ArrowHelper(
-	// 	raycaster.ray.direction, raycaster.ray.origin, 100, 0x884400);
 
-	// // matLine = new THREE.LineMaterial( {
-	// // 				color: 0xffffff,
-	// // 				linewidth: 50, // in pixels
-	// // 				vertexColors: THREE.VertexColors,
-	// // 				//resolution:  // to be set by renderer, eventually
-	// // 				dashed: false
-	// // 			} );
-	// //arrowMark.position.set(0,300,0);
-	// console.log(arrowMark.line.material);
-	// // Update arrow
-	// //var pvel = body.getLinearVelocity();
-	// //console.log(pvel);
-	
-	// let num = vel.normalize.x;
-	// //arrowMark.setDirection(vel.normalize);
-	// console.log(mouseCoords);
-	// //arrowMark.setLength(1000);
-	// scene.add(arrowMark);
-	// console.log("added arrow");
 	return body;
 }
 
