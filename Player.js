@@ -2,6 +2,7 @@
  * Encapsulates everything to create a player model and controls
  * @author Chandler Davis
  */
+
 var Player = function(_color, _position, _rotation) {
 
 	// Start the player with 100 health
@@ -20,7 +21,7 @@ var Player = function(_color, _position, _rotation) {
 	this.torso = new THREE.Mesh(new THREE.CubeGeometry(40, 25, 20), this.material);
 	this.torso.position.set(0,8,0);
 	this.torsoDummy.add(this.torso);
-
+	
 	// Initialize head
 	this.head = new THREE.Mesh(new THREE.CubeGeometry(16, 16, 16), this.material);
 	this.head.position.set(0, 28, 0);

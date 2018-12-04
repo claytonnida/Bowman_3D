@@ -33,6 +33,7 @@
 	<script src="Three.FirstPersonControls.js"></script>
 
 	<script src="Player.js"></script>
+	<script src="three.js-master/examples/js/GPUParticleSystem.js"></script>
 </head>
 
 <body>
@@ -60,12 +61,12 @@ var HEIGHT = window.innerHeight;
 var ASPECT_RATIO = WIDTH / HEIGHT;
 var UNIT_SIZE = 250;
 var BULLET_SPEED = 500;
-var PROJECTILE_DAMAGE = 20;
+var PROJECTILE_DAMAGE = 333.3;
 var ARROW_SPEED = 1;
 var GRAVITY = 9.81;
 
 // Global vars
-var scene, cam, backgroundScene, backgroundCamera, renderer, controls, clock, projector, model, skin;
+var scene, cam, backgroundScene, backgroundCamera, renderer, controls, clock, projector, model, skin, textureCube;
 var runAnim = true;
 var mouseCoords = new THREE.Vector2();
 var container, stats;
@@ -77,7 +78,13 @@ var loader = new THREE.PLYLoader();
 var mousedownID = -1;
 var pow = .1;
 var testArrow;
-
+var particleCount = 1800,
+    particles = new THREE.Geometry(),
+    pMaterial = new THREE.PointsMaterial({
+      color: 0xFFFFFF,
+      size: 20
+	});
+var particleSystem;
 // Holds the Player objects for our game.
 var players = [];
 
@@ -107,11 +114,6 @@ for ( var i = 0; i < 500; i++ )
 var numObjectsToRemove = 0;
 var impactPoint = new THREE.Vector3();
 var impactNormal = new THREE.Vector3();
-var hBar = $('.health-bar');
-var bar = hBar.find('.bar');
-var hit = hBar.find('.hit');
-var pBar = $('.power-bar'),
-power = pBar.find('.power');
 
 // Initialize and run on document ready
 $(document).ready(function() 
@@ -181,58 +183,239 @@ function init()
 	document.body.appendChild(renderer.domElement);
 	
 	// Track mouse position so we know where to shoot
-	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+	document.addEventListener('mousedown', onDocumentMouseDown, false);
 	document.addEventListener('mouseup', onDocumentMouseUp, false);
 	document.addEventListener('mousemove', onDocumentMouseMove, false);
 	
 	// Display HUD
-	$('body').append('<div id="hud"><p>Health: <span id="health">100</span><br />Score: <span id="score">0</span></p></div>');
-	$('body').append('<div class="health-bar" data-total="1000" data-value="1000"><div class="bar"><div class="hit"></div></div></div>');
+	//$('body').append('<div id="hud"><p>Health: <span id="health">100</span><br />Score: <span id="score">0</span></p></div>');
+	$('body').append('<div id="p1" class="health-bar" data-total="1000" data-value="1000"><div class="bar"><div class="hit"></div></div></div>');
+	$('body').append('<div id="p2" class="health-bar2" data-total="1000" data-value="1000"><div class="bar2"><div class="hit2"></div></div></div>');
 	$('body').append('<div class="power-bar" data-total="1000" data-value="0"><div class="power"></div></div>');
 	
 	// Set up "hurt" flash
 	$('body').append('<div id="hurt"></div>');
 	$('#hurt').css({width: WIDTH, height: HEIGHT,});
+	
+// also update the particle system to
+// sort the particles which enables
+// the behaviour we want
+
 }
 
 // Helper function for browser frames
 function animate() {
-	if (runAnim) {	requestAnimationFrame(animate); }
+	if (runAnim) {	requestAnimationFrame(animate); update();}
 	render();
 }
-
+function update()
+{
+	if(particleSystem)
+	{//console.log(particles);
+		//console.log(particleSystem);
+		//particleSystem.rotation.y += 0.01;
+		for (let i = 0; i < particleCount; i++) 
+		{
+			var particle = particles.vertices[i];
+			
+			particle.x = Math.random() * 500 - 250;
+			particle.y = Math.random() * 500 - 250;
+			particle.z = Math.random() * 500 - 250;
+		}
+		particles.verticesNeedUpdate = true;
+	}
+}
 // Update and display
 function render() 
 {
+	var player1Health = $('.health-bar').data('value');
+	var player2Health = $('.health-bar2').data('value');
+	var total = $('.health-bar').data('total');
+	
+	
+	
+	if(player1Health <= 1 || player2Health <= 1)
+	{
+		let winner = player1Health > player2Health ? "Player 1" : "Player 2";
+		runAnim = false;
+		$(renderer.domElement).fadeOut();
+		$('#intro').fadeIn();
+		$('#intro').html(winner +' wins! Click to restart...');
+		$('#intro').one('click', function() {
+			location = location;
+		});
+	}
 	var delta = clock.getDelta();
 	var speed = delta * BULLET_SPEED;
 
 	controls.update(delta); // Move camera
 	updatePhysics( speed );
-	
 	for (let index = 0; index < rigidBodies.length; index++) 
 	{
 		let thisArrow = rigidBodies[index];
 		if(thisArrow.position.x > 2000 || thisArrow.position.x < -2000 || thisArrow.position.z > 2000 || thisArrow.position.z < -2000)
 		{
 			scene.remove(thisArrow);
+			rigidBodies.shift();
+			continue;
 		}
-		
+		if(rigidBodies[index])
+		{
+			for (var vertexIndex = 0; vertexIndex < rigidBodies[index].geometry.attributes.position.array.length/3; vertexIndex++)
+			{       
+				var localVertex = new THREE.Vector3(rigidBodies[index].geometry.attributes.position.array[vertexIndex *3],rigidBodies[index].geometry.attributes.position.array[vertexIndex*3+1],rigidBodies[index].geometry.attributes.position.array[vertexIndex*3+2]);
+				var globalVertex = localVertex.applyMatrix4(rigidBodies[index].matrix);
+				var directionVector = globalVertex.sub( rigidBodies[index].position );
 
+				var ray = new THREE.Raycaster( rigidBodies[index].position, directionVector.clone().normalize() );
+				var collisionResults = ray.intersectObjects( players );
+				vertexIndex += 3;
+			
+				if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) 
+				{
+					//player1.torsoDummy.add(rigidBodies[index]);
+					//scene.remove(rigidBodies[index]);
+					rigidBodies.shift();
+					
+					if(cam.position.z > 0)
+					{
+						var newValue2 = player1Health - PROJECTILE_DAMAGE;
+						var barWidth = (newValue2 / total) * 100;
+						var hitWidth = (PROJECTILE_DAMAGE / player1Health) * 100 + "%";
+					
+						$('.hit').css({width: hitWidth,});
+						$('.health-bar').data({value: newValue2,});
+						setTimeout(function(){
+							$('.hit').css({width: '0',});
+							$('.bar').css({width: barWidth + "%",});
+							}, 500);
+						loader = new THREE.TextureLoader();
+						loader.load('textures/particle2.png', function( texture ){
+							var pMaterial = new THREE.PointsMaterial( {
+								color: 0xFF0000,
+								size: 20,
+								map: texture,
+								//blending: THREE.AdditiveBlending,
+								transparent: true
+							});
+						for (var p = 0; p < particleCount; p++) {
+
+							// create a particle with random
+							// position values, -250 -> 250
+							var pX = Math.random() * 500 - 250,
+								pY = Math.random() * 500 - 250,
+								pZ = Math.random() * 500 - 250,
+								particle = new THREE.Vector3(pX, pY, pZ);
+								particle.velocity = new THREE.Vector3(
+								0,				// x
+								-Math.random(),	// y
+								0);				// z
+							// add it to the geometry
+							particles.vertices.push(particle);
+							}
+							particleSystem = new THREE.Points(
+							particles,
+							pMaterial);
+							particleSystem.sortParticles = true;
+							scene.add(particleSystem);
+							
+						});
+					}
+					else
+					{
+						var newValue2 = player2Health - PROJECTILE_DAMAGE;
+						var barWidth = (newValue2 / total) * 100;
+						var hitWidth = (PROJECTILE_DAMAGE / player2Health) * 100 + "%";
+					
+						$('.hit2').css({width: hitWidth,});
+						$('.health-bar2').data({value: newValue2,});
+						setTimeout(function(){
+							$('.hit2').css({width: '0',});
+							$('.bar2').css({width: barWidth + "%",});
+							}, 500);
+						loader = new THREE.TextureLoader();
+						loader.load('textures/particle2.png', function( texture ){
+							var pMaterial = new THREE.PointsMaterial( {
+								color: 0xFF0000,
+								size: 20,
+								map: texture,
+								//blending: THREE.AdditiveBlending,
+								transparent: true
+							});
+						for (var p = 0; p < particleCount; p++) {
+
+							// create a particle with random
+							// position values, -250 -> 250
+							var pX = Math.random() * 500 - 250,
+								pY = Math.random() * 500 - 250,
+								pZ = Math.random() * 500 - 250,
+								particle = new THREE.Vector3(pX, pY, pZ);
+								particle.velocity = new THREE.Vector3(
+								0,				// x
+								-Math.random(),	// y
+								0);				// z
+							// add it to the geometry
+							particles.vertices.push(particle);
+							}
+							particleSystem = new THREE.Points(
+							particles,
+							pMaterial);
+							particleSystem.sortParticles = true;
+							scene.add(particleSystem);
+							
+						});
+					}
+				
+				}
+			}
+		}
 	}
-
 	let arrowDir = scene.getObjectByName("arrowDir");
 	if(arrowDir)
 	{
-		//console.log(arrowDir.direction);
-		//arrowDir.position.set(raycaster.ray.origin);
 		raycaster.setFromCamera( mouseCoords, cam );
 		arrowDir.setDirection(raycaster.ray.direction);
 	}
+
+	let newArrowDir = scene.getObjectByName("newArrowDir");
+	if(newArrowDir)
+	{
+		scene.remove(scene.getObjectByName("newArrowDir"));
+		var numPoints = 100;
+
+		var spline = new THREE.CatmullRomCurve3([
+		new THREE.Vector3(0,129,-1125),
+		new THREE.Vector3(0,129,-1125)
+		]);
+		for (let i = 1; i < 51; i++) {
+			spline.points.push(new THREE.Vector3(wind.x*i +100, 120, i*5))
+			
+		}
+		//console.log(wind);
+		var material = new THREE.LineBasicMaterial({
+			color: 0xff00f0,
+			linewidth: 50,
+		});
+
+		var geometry = new THREE.Geometry();
+		var splinePoints = spline.getPoints(numPoints);
+
+		for(var i = 0; i < splinePoints.length; i++){
+			geometry.vertices.push(splinePoints[i]);  
+		}
+
+		var line = new THREE.Line(geometry, material);
+		line.name = "newArrowDir";
+		scene.add(line);
+	}
+
 	
+	cameraCube.rotation.copy( cam.rotation );
+	//cameraCube.rotation.y += .001;
 	renderer.autoClear = false;
-	renderer.clear();
-	renderer.render(backgroundScene, backgroundCamera)
+	renderer.gammaOutput = true;
+	//renderer.clear();
+	renderer.render(backgroundScene, cameraCube);
 	renderer.render(scene, cam); // Repaint
 	time += delta;
 }
@@ -245,56 +428,84 @@ function setupScene()
 	floorGeo.computeVertexNormals();
 	floorGeo.computeFaceNormals();
 	
-	var floor = new THREE.Mesh(floorGeo, new THREE.MeshLambertMaterial({color: 0xEDCBA0}));
+	loader = new THREE.TextureLoader();
+	loader.load('/three.js-master/examples/textures/terrain/grasslight-big.jpg', function( texture ){
+		var floorMat = new THREE.MeshBasicMaterial( {
+			map: texture
+		});
+		var floor = new THREE.Mesh(floorGeo, floorMat);
 	scene.add(floor);
-
-	loader.load( 'models/wind.ply', function ( geometry ) {
-		geometry.computeVertexNormals();
-
-		var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
-		
-		var mesh = new THREE.Mesh( geometry, material );
-		mesh.position.y = 75;
-		mesh.position.x = 100;
-		mesh.position.z = -900;
-		mesh.rotation.x = - Math.PI / 2;
-		
-		let angle = Math.atan2(wind.z,-wind.x);
-		mesh.rotation.z = angle;
-		mesh.rotation.z += (1.5708*2); 
-		mesh.scale.multiplyScalar( .1 );
-		mesh.castShadow = true;
-		mesh.receiveShadow = true;
-
-		scene.add( mesh );
 	});
+	
 
-	loader.load( 'models/wind.ply', function ( geometry ) {
-		geometry.computeVertexNormals();
-		
-		var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
-		
-		var mesh2 = new THREE.Mesh( geometry, material );
-		mesh2.position.y = 75;
-		mesh2.position.x = -100;
-		mesh2.position.z = 900;
-		mesh2.rotation.x = - Math.PI / 2;
-		
-		let angle = Math.atan2(wind.z,-wind.x);
-		mesh2.rotation.z = angle;
-		mesh2.rotation.z += (1.5708*2); 
-		mesh2.scale.multiplyScalar( .1 );
-		mesh2.castShadow = true;
-		mesh2.receiveShadow = true;
-		
-		scene.add( mesh2 );
-	});
+	var loader = new THREE.PLYLoader();
+				loader.load( 'models/wind.ply', function ( geometry ) {
+					geometry.computeVertexNormals();
+					var material = new THREE.MeshStandardMaterial( { color: 0x4d2600, flatShading: true } );
+					var mesh = new THREE.Mesh( geometry, material );
+					mesh.position.y = 75;
+					mesh.position.x = 100;
+					mesh.position.z = -900;
+					mesh.rotation.x = - Math.PI / 2;
+					let angle = Math.atan2(wind.z,-wind.x);
+					mesh.rotation.z = angle;
+					mesh.rotation.z += (1.5708*2); 
+					mesh.scale.multiplyScalar( .1 );
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+					scene.add( mesh );
+				} );
+
+	var loader = new THREE.PLYLoader();
+				loader.load( 'models/wind.ply', function ( geometry ) {
+					geometry.computeVertexNormals();
+					var material = new THREE.MeshStandardMaterial( { color: 0x4d2600, flatShading: true } );
+					var mesh2 = new THREE.Mesh( geometry, material );
+					mesh2.position.y = 75;
+					mesh2.position.x = -100;
+					mesh2.position.z = 900;
+					mesh2.rotation.x = - Math.PI / 2;
+					let angle = Math.atan2(wind.z,-wind.x);
+					mesh2.rotation.z = angle;
+					mesh2.rotation.z += (1.5708*2); 
+					mesh2.scale.multiplyScalar( .1 );
+					mesh2.castShadow = true;
+					mesh2.receiveShadow = true;
+					scene.add( mesh2 );
+				} );
 
 	var arrowMark = new THREE.ArrowHelper(
 		new THREE.Vector3(0,0,1), new THREE.Vector3(0,130,-1125), 1000, 0x884400);
 	arrowMark.name = "arrowDir";
-	scene.add(arrowMark);
-	console.log("added arrow");
+	//scene.add(arrowMark);
+
+
+// smooth my curve over this many points
+var numPoints = 100;
+
+spline = new THREE.SplineCurve3([
+   new THREE.Vector3(0,129,-1125),
+   new THREE.Vector3(0,129,-1125)
+  
+]);
+
+var material = new THREE.LineBasicMaterial({
+	color: 0xff00f0,
+	linewidth: 50,
+});
+
+var geometry = new THREE.Geometry();
+var splinePoints = spline.getPoints(numPoints);
+
+for(var i = 0; i < splinePoints.length; i++){
+    geometry.vertices.push(splinePoints[i]);  
+}
+
+var line = new THREE.Line(geometry, material);
+line.name = "newArrowDir";
+//scene.add(line);// smooth my curve over this many points
+
+
 						
 	// Lighting
 	var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
@@ -310,7 +521,7 @@ function setupScene()
 	// Background
 
 	// Load the background texture
-	var texture = new THREE.TextureLoader().load('images/Top-Header-Grass-Sky-Background-JPG.jpg');
+	var texture = new THREE.TextureLoader().load('images/dbz-bg.jpg');
 	var backgroundMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 0), new THREE.MeshBasicMaterial({map: texture}));
 
 	// The background (skybox) should have no effect on depth buffer.
@@ -320,10 +531,38 @@ function setupScene()
 	// Create your background scene
 	backgroundScene = new THREE.Scene();
 	backgroundCamera = new THREE.Camera();
+	cameraCube = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 100000 );
+	backgroundMesh.name = "bg";
 
+
+	var r = "images/skybox/";
+				var urls = [ r + "skybox_px.jpg", r + "skybox_nx.jpg",
+							 r + "skybox_py.jpg", r + "skybox_ny.jpg",
+							 r + "skybox_pz.jpg", r + "skybox_nz.jpg" ];
+	textureCube = new THREE.CubeTextureLoader().load( urls );
+	textureCube.format = THREE.RGBFormat;
+	textureCube.mapping = THREE.CubeReflectionMapping;
+	textureCube.encoding = THREE.sRGBEncoding;
+	var cubeShader = THREE.ShaderLib[ "cube" ];
+				var cubeMaterial = new THREE.ShaderMaterial( {
+					fragmentShader: cubeShader.fragmentShader,
+					vertexShader: cubeShader.vertexShader,
+					uniforms: cubeShader.uniforms,
+					depthWrite: false,
+					side: THREE.BackSide
+				} );
+				cubeMaterial.uniforms[ "tCube" ].value = textureCube;
+				Object.defineProperty( cubeMaterial, 'map', {
+					get: function () {
+						return this.uniforms.tCube.value;
+					}
+				} );
+				cubeMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 100, 100, 100 ), cubeMaterial );
+				
+				backgroundScene.add( cubeMesh );
 	// Add the background to the scene.
-	backgroundScene.add(backgroundCamera);
-	backgroundScene.add(backgroundMesh);
+	backgroundScene.add(cameraCube);
+	//backgroundScene.add(backgroundMesh);
 }
 
 function initPlayers() 
@@ -370,14 +609,18 @@ function initPlayers()
 	player1 = new Player(0xff0000, new THREE.Vector3(0, 84, -1125), new THREE.Euler(0, 0, 0));
 	player1.leftHandDummy.add(scene.getObjectByName("bow1"));
 	
-	players.push(player1.torso);
+	players.push(player1.torso,player1.head,player1.leftShoulder,player1.rightShoulder,player1.leftArm
+	,player1.rightArm,player1.rightHand,player1.leftHand,player1.lowerTorso,player1.waist,player1.leftThigh
+	,player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot);
 	scene.add(player1.torsoDummy);
 
 	// Add player two
 	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0));
 	player2.leftHandDummy.add(scene.getObjectByName("bow2"));
 
-	players.push(player2.torso);
+	players.push(player2.torso,player2.head,player2.leftShoulder,player2.rightShoulder,player2.leftArm
+	,player2.rightArm,player2.rightHand,player2.leftHand,player2.lowerTorso,player2.waist,player2.leftThigh
+	,player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot);
 	scene.add(player2.torsoDummy);
 
 	console.log(player1.leftHandDummy.children);
@@ -402,7 +645,7 @@ function onDocumentMouseDown(e) {
 	// Reset the power and arrow speed.
 	//console.log(raycaster.ray.origin);
 	pow = .1;
-	ARROWSPEED = 1;
+	ARROW_SPEED = 1;
 	$('.power').css({width: 0+"%",});
 	$('.power-bar').css({value: 0,});
 	// Prevent infinite loop.
@@ -412,14 +655,15 @@ function onDocumentMouseDown(e) {
 }
 
 function whileMouseDown() {
-	
-	// While holding mouse down, increase arrow power.
-	ARROWSPEED += 1;
-	// TODO working on changing the velocity based on which player we are.
-	if(wind.z > 0)
-	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/50, wind.z*ARROWSPEED/(2*Math.PI)) );
+	if(cam.position.z < 0)
+	{
+		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))+ARROW_SPEED) );
+	}
 	else
-	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/50, wind.z*-ARROWSPEED/(2*Math.PI)) );
+	{
+		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))-ARROW_SPEED) );
+	}
+	
 
 	// Grab CSS of the power bar.
 	var value = $('.power-bar').data('value');
@@ -427,11 +671,13 @@ function whileMouseDown() {
 	
 	// Update the value based on power.
     var newValue = pow;
-	pow += .02;
+	pow += .05;
 	var barWidth = (newValue / total) * 100;
   
 	if(pow * 100 < 100) {
 		var hitWidth = (pow) * 100 + "%";
+		// While holding mouse down, increase arrow power.
+		ARROW_SPEED += .5;
 	}
     else {
 		var hitWidth = 100 + "%";
@@ -465,18 +711,15 @@ function onDocumentMouseUp(e) {
 	var loader = new THREE.PLYLoader();
 	loader.load( 'models/Arrow.ply', function ( geometry ) {
 		geometry.computeVertexNormals();
-		var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
+		var material = new THREE.MeshStandardMaterial( { color: 0x130d06, flatShading: true } );
 		var mesh3 = new THREE.Mesh( geometry, material );
 		mesh3.position.y = 100;
 		mesh3.position.x = -100;
 		mesh3.position.z = 900;
-		//mesh3.rotation.x = - Math.PI / 2;
-		//let angle = Math.atan2(wind.z,-wind.x);
-		//mesh3.rotation.z = angle;
-		mesh3.rotation.z += (1.5708); 
+		//mesh3.rotation.z += (1.5708); 
+		mesh3.rotation = raycaster.ray.direction;
 		mesh3.scale.multiplyScalar( 10.0 );
-		mesh3.castShadow = true;
-		mesh3.receiveShadow = true;
+		mesh3.scale.x = 4;
 		mesh3.castShadow = true;
 		mesh3.receiveShadow = true;
 
@@ -488,11 +731,11 @@ function onDocumentMouseUp(e) {
 		
 		quat.set( 0, 0, 0, 1 );
 		
-		var ballBody = createRigidBody( mesh3, ballShape, ballMass, pos, quat, new THREE.Vector3(wind.x,0.0,wind.z) );
+		var ballBody = createRigidBody( mesh3, ballShape, ballMass, pos, quat );
 		pos.copy( raycaster.ray.direction );
 		pos.multiplyScalar( 24 );
 		
-		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );	
+		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
 	});
 }
 
@@ -595,7 +838,7 @@ function initPhysics() {
 	solver = new Ammo.btSequentialImpulseConstraintSolver();
 	
 	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-	physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), -GRAVITY/50, wind.z/(2*Math.PI)) );
+	physicsWorld.setGravity( new Ammo.btVector3( 0, -GRAVITY/50, 0) );
 }
 
 function updatePhysics( deltaTime ) 
@@ -617,10 +860,18 @@ function updatePhysics( deltaTime )
 			var q = transformAux1.getRotation();
 			
 			objThree.position.set(p.x(), p.y(), p.z());
-			
+			if(cam.position.z < 0)
+			{
+				objThree.rotation.y = (4.7124);
+				objThree.userData.collided = false;
+			}
+			else
+			{
+				objThree.rotation.y = (-4.7124);
+				objThree.userData.collided = false;
+			}
 			//objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
-			objThree.rotation.y = (4.7124);
-			objThree.userData.collided = false;
+			
 		}
 	}
 
@@ -735,5 +986,11 @@ function createMaterial( color ) {
 function getRandomArbitrary(min, max) {
 	return Math.random() * (max - min) + min;
 }
+
+// function getQuadraticBezierXYatT(startPt,controlPt,endPt,T) {
+//     var x = Math.pow(1-T,2) * startPt.x + 2 * (1-T) * T * controlPt.x + Math.pow(T,2) * endPt.x; 
+//     var y = Math.pow(1-T,2) * startPt.y + 2 * (1-T) * T * controlPt.y + Math.pow(T,2) * endPt.y; 
+//     return( {x:x,y:y} );
+// }
 </script>
 </html>
