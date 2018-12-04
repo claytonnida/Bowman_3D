@@ -9,7 +9,8 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.material = new THREE.MeshPhongMaterial({color: _color});
 
 	this.bow = _bow;
-	this.bow.position.set(-5, 7, 100);
+	this.bow.position.set(-2, 100, 50);
+	this.bow.scale.set(1.85, 1.85, 1.85);
 
 	let middle = new THREE.Object3D();
 	middle.position.set(-.7, -20, -38);
@@ -24,7 +25,13 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.playerDummy.position.copy(_position);
 	this.playerDummy.rotation.copy(_rotation);
 
-	this.playerDummy.add(this.bow);
+	this.aimDummy = new THREE.Object3D();
+	this.aimDummy.position.set(0, 10, 0);
+	this.aimDummy.rotateX(1.5708);
+	this.aimDummy.add(new THREE.Mesh(new THREE.CubeGeometry(2, 2, 2), this.material));
+	this.playerDummy.add(this.aimDummy);
+
+	this.aimDummy.add(this.bow);
 
 	this.leftHandDummy = new THREE.Object3D();
 	this.leftHandDummy.position.set(0, -20, -35);
@@ -65,12 +72,12 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.upperTorsoDummy.position.set(0, -7, 0);
 	this.leftShoulderDummy.add(this.upperTorsoDummy);
 
-	this.upperTorso = new THREE.Mesh(new THREE.CubeGeometry(7, 6, 15), this.material);
-	//this.upperTorso.position.set(0,8,0);
+	this.upperTorso = new THREE.Mesh(new THREE.CubeGeometry(7, 8, 15), this.material);
 	this.upperTorsoDummy.add(this.upperTorso);
 
 	this.head = new THREE.Mesh(new THREE.CubeGeometry(6, 7, 6), this.material);
-	this.head.position.set(0, 6, 0);
+	this.head.position.set(0, 7, 0);
+	this.head.rotateY(.85);
 	this.upperTorsoDummy.add(this.head);
 
 	this.rightHandDummy = new THREE.Object3D();
@@ -101,33 +108,31 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.rightShoulder.position.set(0, -6.5 ,0);
 	this.rightElbowDummy.add(this.rightShoulder);
 
-
-	this.lowerTorso = new THREE.Mesh(new THREE.CubeGeometry(28, 18, 18), this.material);
-	this.lowerTorso.position.set(0,-12.5,0);
+	this.lowerTorso = new THREE.Mesh(new THREE.CubeGeometry(6, 10, 12), this.material);
+	this.lowerTorso.position.set(0,-5,0);
 	this.upperTorsoDummy.add(this.lowerTorso);
 
 	this.waistDummy = new THREE.Object3D();
-	this.waistDummy.position.set(0,-26,0);
-	this.waistDummy.rotateY(-1.2);
+	this.waistDummy.position.set(4.5, 0,0);
+	this.waistDummy.rotateY(-1.4);
 	this.playerDummy.add(this.waistDummy);
 
-	
-	this.waist = new THREE.Mesh(new THREE.CubeGeometry(14, 12, 18), this.material);
+	this.waist = new THREE.Mesh(new THREE.CubeGeometry(12, 12, 10), this.material);
 	this.waistDummy.add(this.waist);
 
 	this.leftThighDummy = new THREE.Object3D();
-	this.leftThighDummy.position.set(13,-20,0);
+	this.leftThighDummy.position.set(10,-20,0);
 	this.waistDummy.add(this.leftThighDummy);
 	
-	this.leftThigh = new THREE.Mesh(new THREE.CubeGeometry(12, 26, 12), this.material);
+	this.leftThigh = new THREE.Mesh(new THREE.CubeGeometry(8, 26, 8), this.material);
 	this.leftThigh.position.set(0,13,0);
 	this.leftThighDummy.add(this.leftThigh);
 
 	this.rightThighDummy = new THREE.Object3D();
-	this.rightThighDummy.position.set(-13,-20,0);
+	this.rightThighDummy.position.set(-10,-20,0);
 	this.waistDummy.add(this.rightThighDummy);
 	
-	this.rightThigh = new THREE.Mesh(new THREE.CubeGeometry(12, 26, 12), this.material);
+	this.rightThigh = new THREE.Mesh(new THREE.CubeGeometry(8, 26, 8), this.material);
 	this.rightThigh.position.set(0,13,0);
 	this.rightThighDummy.add(this.rightThigh);
 
@@ -135,7 +140,7 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.leftCalfDummy.position.set(0,-26,0);
 	this.leftThighDummy.add(this.leftCalfDummy);
 	
-	this.leftCalf = new THREE.Mesh(new THREE.CubeGeometry(10, 26, 10), this.material);
+	this.leftCalf = new THREE.Mesh(new THREE.CubeGeometry(9, 26, 9), this.material);
 	this.leftCalf.position.set(0,13,0);
 	this.leftCalfDummy.add(this.leftCalf);
 
@@ -143,15 +148,15 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.rightCalfDummy.position.set(0,-26,0);
 	this.rightThighDummy.add(this.rightCalfDummy);
 	
-	this.rightCalf = new THREE.Mesh(new THREE.CubeGeometry(10, 26, 10), this.material);
+	this.rightCalf = new THREE.Mesh(new THREE.CubeGeometry(9, 26, 9), this.material);
 	this.rightCalf.position.set(0,13,0);
 	this.rightCalfDummy.add(this.rightCalf);
 
-	this.leftFoot = new THREE.Mesh(new THREE.CubeGeometry(12, 4, 20), this.material);
+	this.leftFoot = new THREE.Mesh(new THREE.CubeGeometry(10, 4, 22), this.material);
 	this.leftFoot.position.set(0, -2, 4);
 	this.leftCalfDummy.add(this.leftFoot);
 
-	this.rightFoot = new THREE.Mesh(new THREE.CubeGeometry(12, 4, 20), this.material);
+	this.rightFoot = new THREE.Mesh(new THREE.CubeGeometry(10, 4, 22), this.material);
 	this.rightFoot.position.set(0, -2, 4);
 	this.rightCalfDummy.add(this.rightFoot);
 };

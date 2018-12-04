@@ -128,8 +128,8 @@ var impactNormal = new THREE.Vector3();
 $(document).ready(function() 
 {
 	$('body').append('<div id="intro">Click to start</div>');
-	// $('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) 
-	$('#intro').css({width: WIDTH, height: HEIGHT}).one('mouseenter', function(e) 
+ $('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) 
+	//$('#intro').css({width: WIDTH, height: HEIGHT}).one('mouseenter', function(e) 
 	{
 		e.preventDefault();
 		$(this).fadeOut();
@@ -153,14 +153,14 @@ function init()
 	// cam = new THREE.PerspectiveCamera(70, ASPECT_RATIO, 1, 10000); // FOV, aspect, near, far
 
 	cam1 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
-	cam1.position.y = 125;
+	cam1.position.y = 150;
 	cam1.position.x = 0;
 	cam1.position.z = -1325;
 	cam1.lookAt(new THREE.Vector3( 0, -100, 825 ));
 	scene.add(cam1);
 
 	cam2 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
-	cam2.position.y = 125;
+	cam2.position.y = 150;
 	cam2.position.x = 0;
 	cam2.position.z = 1325;
 	cam2.lookAt(new THREE.Vector3( 0, -100, -825 ));
@@ -221,14 +221,13 @@ function animate() {
 function update()
 {
 	if(particles.vertices.length > 0)
-	{//console.log(particles);
-		//console.log(particleSystem);
+	{
 		//particleSystem.rotation.y += 0.01;
 		for (let i = 0; i < particleCount; i++) 
 		{
 			var particle = particles.vertices[i];
 			particle.x = getRandomArbitrary(particle.x - 1, particle.x + 1);
-			 particle.y = getRandomArbitrary(particle.y - .8, particle.y);
+			 particle.y = getRandomArbitrary(particle.y - .7, particle.y);
 			 particle.z = getRandomArbitrary(particle.z - 1, particle.z + 1);
 		}
 		particles.verticesNeedUpdate = true;
@@ -245,8 +244,6 @@ function render()
 	var player1Health = $('.health-bar').data('value');
 	var player2Health = $('.health-bar2').data('value');
 	var total = $('.health-bar').data('total');
-	
-	
 	
 	if(player1Health <= 1 || player2Health <= 1)
 	{
@@ -303,12 +300,7 @@ function render()
 			
 				if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) 
 				{
-					//if(rigidBodies[0].position)
 					var arrowClone = rigidBodies[0].clone();
-					
-					//console.log(arrowClone);
-					//player1.torsoDummy.add(rigidBodies[index]);
-					//scene.remove(rigidBodies[index]);
 					
 					if(cam.position.z > 0)
 					{
@@ -426,39 +418,75 @@ function render()
 		}
 	}
 	
-
-	if(activePlayer.bow) {
-
-		let dir = raycaster.ray.direction;
-		let axis = new THREE.Vector3();
-
-		if ( dir.y > 0.99999 ) {
-			activePlayer.bow.quaternion.set( 0, 0, 0, 1 );
-		} else if ( dir.y < -0.99999 ) {
-			activePlayer.bow.quaternion.set( 1, 0, 0, 0 );
-		} else {
-			axis.set(dir.z, 0, -dir.x).normalize();
-
-			activePlayer.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-		}
-	}
-	
 	cameraCube.rotation.copy( cam.rotation );
-	//cameraCube.rotation.y += .001;
 	renderer.autoClear = false;
 	renderer.gammaOutput = true;
 	renderer.clear();
 	renderer.render(backgroundScene, cameraCube);
+
+
+	// if(mouseCoords.x > 0.5) {
+	// 	activePlayer.aimDummy.rotateZ(.01);
+	// }
+	// if(mouseCoords.x < -0.5) {
+	// 	activePlayer.aimDummy.rotateZ(-.01);
+	// }
+	// if(mouseCoords.y > 0.5) {
+	// 	activePlayer.aimDummy.rotateX(-.01);
+	// }
+	// if(mouseCoords.y < -0.5) {
+	// 	activePlayer.aimDummy.rotateX(.01);
+	// }
+	if(cam.position.z < 0)
+	{
+			if(activePlayer.bow) {
+			let dir = raycaster.ray.direction;
+			let axis = new THREE.Vector3();
+			if ( dir.y > 0.99999 ) {
+				// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
+				activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
+			} else if ( dir.y < -0.99999 ) {
+				// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
+				activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
+			} else {
+				axis.set(dir.z, 0, -dir.x).normalize();
+				// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+				activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+			}
+		}
+	}
+	else
+	{
+		
+		if(activePlayer.bow) {
+			let dir = raycaster.ray.direction;
+			let axis = new THREE.Vector3();
+			if ( dir.y > 0.99999 ) {
+				// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
+				activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
+			} else if ( dir.y < -0.99999 ) {
+				// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
+				activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
+			} else {
+				axis.set(-dir.z, 0, dir.x).normalize();
+				// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+				activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+			}
+		}
+	}
+	
+
 	if(cam1Active) {
 		cam = cam1;
-		raycaster.setFromCamera( mouseCoords, cam );
+		raycaster.setFromCamera( mouseCoords, cam);
 		renderer.render(scene, cam1); // Repaint
 	} else {
 		cam = cam2;
-		raycaster.setFromCamera( mouseCoords, cam );
+		raycaster.setFromCamera( mouseCoords, cam);
 		renderer.render(scene, cam2); // Repaint
 	}
-	
+
+
 	time += delta;
 }
 
@@ -604,27 +632,25 @@ function initPlayers() {
 	});
 
 	// Add player one
-	player1 = new Player(0xff0000, new THREE.Vector3(0, 84, -1125), new THREE.Euler(0, 0, 0), bow1);
+	player1 = new Player(0xff0000, new THREE.Vector3(0, 60, -1125), new THREE.Euler(0, 0, 0), bow1);
 
 	player1HitBoxes.push(player1.upperTorso,player1.leftShoulder,player1.rightShoulder,player1.leftArm
-	,player1.rightArm,player1.rightHand,player1.leftHand,player1.waist,player1.leftThigh
-	,player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot);
+	,player1.rightArm,player1.rightHand,player1.leftHand,player1.waist,player1.leftThigh,player1.head,
+	player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot,player1.leftElbow,player1.rightElbow,player1.lowerTorso);
 	players.push(player1);
 	scene.add(player1.playerDummy);
 
-	// Add player two
-	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
 
+	// Add player two
+	player2 = new Player(0x0000ff, new THREE.Vector3(0, 60, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
 
 	player2HitBoxes.push(player2.upperTorso,player2.leftShoulder,player2.rightShoulder,player2.leftArm
-	,player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh
-	,player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot);
+	,player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh,player2.head,
+	player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot,player2.leftElbow,player2.rightElbow,player2.lowerTorso);
 	players.push(player2);
 	scene.add(player2.playerDummy);
 
 	activePlayer = player1;
-	console.log(activePlayer);
-	
 }
 
 function distance(x1, y1, x2, y2) { 
@@ -645,7 +671,6 @@ function checkWallCollision(v) {
 function onDocumentMouseDown(e) {
 
 	// Reset the power and arrow speed.
-	//console.log(raycaster.ray.origin);
 	pow = .1;
 	ARROW_SPEED = 1;
 	$('.power').css({width: 0+"%",});
@@ -746,7 +771,6 @@ function onDocumentMouseUp(e) {
 		ballShape.setMargin( margin );
 		
 		pos.copy( raycaster.ray.direction );
-		//pos.add( raycaster.ray.origin );
 		pos.add( activePlayer.bow.getObjectByName("middle").getWorldPosition() );
 		
 		quat.set( 0, 0, 0, 1 );
@@ -883,7 +907,7 @@ function updatePhysics( deltaTime )
 			var q = transformAux1.getRotation();
 			
 			objThree.position.set(p.x(), p.y(), p.z());
-			//objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+
 			if(cam.position.z < 0)
 			{
 				objThree.rotation.y = (4.7124);
@@ -898,98 +922,98 @@ function updatePhysics( deltaTime )
 		}
 	}
 
-	for ( var i = 0, il = dispatcher.getNumManifolds(); i < il; i ++ ) {
+	// for ( var i = 0, il = dispatcher.getNumManifolds(); i < il; i ++ ) {
 		
-		var contactManifold = dispatcher.getManifoldByIndexInternal( i );
+	// 	var contactManifold = dispatcher.getManifoldByIndexInternal( i );
 		
-		var rb0 = contactManifold.getBody0();
-		var rb1 = contactManifold.getBody1();
+	// 	var rb0 = contactManifold.getBody0();
+	// 	var rb1 = contactManifold.getBody1();
 		
-		var threeObject0 = Ammo.castObject( rb0.getUserPointer(), Ammo.btVector3 ).threeObject;
-		var threeObject1 = Ammo.castObject( rb1.getUserPointer(), Ammo.btVector3 ).threeObject;
+	// 	var threeObject0 = Ammo.castObject( rb0.getUserPointer(), Ammo.btVector3 ).threeObject;
+	// 	var threeObject1 = Ammo.castObject( rb1.getUserPointer(), Ammo.btVector3 ).threeObject;
 		
-		if ( ! threeObject0 && ! threeObject1 ) 
-		{
-			continue;
-		}
+	// 	if ( ! threeObject0 && ! threeObject1 ) 
+	// 	{
+	// 		continue;
+	// 	}
 		
-		var userData0 = threeObject0 ? threeObject0.userData : null;
-		var userData1 = threeObject1 ? threeObject1.userData : null;
+	// 	var userData0 = threeObject0 ? threeObject0.userData : null;
+	// 	var userData1 = threeObject1 ? threeObject1.userData : null;
 		
-		var breakable0 = userData0 ? userData0.breakable : false;
-		var breakable1 = userData1 ? userData1.breakable : false;
+	// 	var breakable0 = userData0 ? userData0.breakable : false;
+	// 	var breakable1 = userData1 ? userData1.breakable : false;
 		
-		var collided0 = userData0 ? userData0.collided : false;
-		var collided1 = userData1 ? userData1.collided : false;
+	// 	var collided0 = userData0 ? userData0.collided : false;
+	// 	var collided1 = userData1 ? userData1.collided : false;
 		
-		if ( ( ! breakable0 && ! breakable1 ) || ( collided0 && collided1 ) ) {
-			continue;
-		}
+	// 	if ( ( ! breakable0 && ! breakable1 ) || ( collided0 && collided1 ) ) {
+	// 		continue;
+	// 	}
 
-		var contact = false;
-		var maxImpulse = 0;
+	// 	var contact = false;
+	// 	var maxImpulse = 0;
 		
-		for ( var j = 0, jl = contactManifold.getNumContacts(); j < jl; j ++ ) {
-			var contactPoint = contactManifold.getContactPoint( j );
+	// 	for ( var j = 0, jl = contactManifold.getNumContacts(); j < jl; j ++ ) {
+	// 		var contactPoint = contactManifold.getContactPoint( j );
 			
-			if ( contactPoint.getDistance() < 0 ) {
-				contact = true;
+	// 		if ( contactPoint.getDistance() < 0 ) {
+	// 			contact = true;
 				
-				var impulse = contactPoint.getAppliedImpulse();
+	// 			var impulse = contactPoint.getAppliedImpulse();
 				
-				if ( impulse > maxImpulse ) {
-					maxImpulse = impulse;
+	// 			if ( impulse > maxImpulse ) {
+	// 				maxImpulse = impulse;
 					
-					var pos = contactPoint.get_m_positionWorldOnB();
-					var normal = contactPoint.get_m_normalWorldOnB();
+	// 				var pos = contactPoint.get_m_positionWorldOnB();
+	// 				var normal = contactPoint.get_m_normalWorldOnB();
 					
-					impactPoint.set( pos.x(), pos.y(), pos.z() );
-					impactNormal.set( normal.x(), normal.y(), normal.z() );
-				}
+	// 				impactPoint.set( pos.x(), pos.y(), pos.z() );
+	// 				impactNormal.set( normal.x(), normal.y(), normal.z() );
+	// 			}
 
-				break;
-			}
-		}
+	// 			break;
+	// 		}
+	// 	}
 
-		// If no point has contact, abort
-		if (!contact) continue;
+	// 	// If no point has contact, abort
+	// 	if (!contact) continue;
 
-		// Subdivision
-		var fractureImpulse = 250;
+	// 	// Subdivision
+	// 	var fractureImpulse = 250;
 		
-		if ( breakable0 && !collided0 && maxImpulse > fractureImpulse ) {
-			var debris = convexBreaker.subdivideByImpact( threeObject0, impactPoint, impactNormal , 1, 2, 1.5 );
+	// 	if ( breakable0 && !collided0 && maxImpulse > fractureImpulse ) {
+	// 		var debris = convexBreaker.subdivideByImpact( threeObject0, impactPoint, impactNormal , 1, 2, 1.5 );
 			
-			var numObjects = debris.length;
-			for ( var j = 0; j < numObjects; j++ ) {
-				createDebrisFromBreakableObject( debris[ j ] );
-			}
+	// 		var numObjects = debris.length;
+	// 		for ( var j = 0; j < numObjects; j++ ) {
+	// 			createDebrisFromBreakableObject( debris[ j ] );
+	// 		}
 
-			objectsToRemove[ numObjectsToRemove++ ] = threeObject0;
+	// 		objectsToRemove[ numObjectsToRemove++ ] = threeObject0;
 			
-			userData0.collided = true;
-		}
+	// 		userData0.collided = true;
+	// 	}
 		
-		if ( breakable1 && !collided1 && maxImpulse > fractureImpulse ) {
-			var debris = convexBreaker.subdivideByImpact( threeObject1, impactPoint, impactNormal , 1, 2, 1.5 );
+	// 	if ( breakable1 && !collided1 && maxImpulse > fractureImpulse ) {
+	// 		var debris = convexBreaker.subdivideByImpact( threeObject1, impactPoint, impactNormal , 1, 2, 1.5 );
 			
-			var numObjects = debris.length;
-			for ( var j = 0; j < numObjects; j++ ) 
-			{
-				createDebrisFromBreakableObject( debris[ j ] );
-			}
+	// 		var numObjects = debris.length;
+	// 		for ( var j = 0; j < numObjects; j++ ) 
+	// 		{
+	// 			createDebrisFromBreakableObject( debris[ j ] );
+	// 		}
 			
-			objectsToRemove[ numObjectsToRemove++ ] = threeObject1;
+	// 		objectsToRemove[ numObjectsToRemove++ ] = threeObject1;
 			
-			userData1.collided = true;
-		}
-	}
+	// 		userData1.collided = true;
+	// 	}
+	// }
 
-	for ( var i = 0; i < numObjectsToRemove; i++ ) {
-		removeDebris( objectsToRemove[ i ] );
-	}
+	// for ( var i = 0; i < numObjectsToRemove; i++ ) {
+	// 	removeDebris( objectsToRemove[ i ] );
+	// }
 
-	numObjectsToRemove = 0;
+	// numObjectsToRemove = 0;
 }
 
 function initWind() {
@@ -1009,10 +1033,5 @@ function getRandomArbitrary(min, max) {
 	return Math.random() * (max - min) + min;
 }
 
-// function getQuadraticBezierXYatT(startPt,controlPt,endPt,T) {
-//     var x = Math.pow(1-T,2) * startPt.x + 2 * (1-T) * T * controlPt.x + Math.pow(T,2) * endPt.x; 
-//     var y = Math.pow(1-T,2) * startPt.y + 2 * (1-T) * T * controlPt.y + Math.pow(T,2) * endPt.y; 
-//     return( {x:x,y:y} );
-// }
 </script>
 </html>
