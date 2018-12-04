@@ -266,7 +266,8 @@ function render()
 	for (let index = 0; index < rigidBodies.length; index++) 
 	{
 		let thisArrow = rigidBodies[index];
-		if(thisArrow.position.x > 2000 || thisArrow.position.x < -2000 || thisArrow.position.z > 2000 || thisArrow.position.z < -2000)
+		if(thisArrow.position.x > 2000 || thisArrow.position.x < -2000 || thisArrow.position.z > 2000 || thisArrow.position.z < -2000 
+		|| thisArrow.position.y < 10)
 		{
 
 			cam1Active = !cam1Active;
@@ -424,32 +425,7 @@ function render()
 			
 		}
 	}
-	let arrowDir = scene.getObjectByName("arrowDir");
-	raycaster.setFromCamera( mouseCoords, cam1 );
 	
-	if(player1.bow) {
-		let dir = raycaster.ray.direction;
-		let axis = new THREE.Vector3();
-		if ( dir.y > 0.99999 ) {
-			// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
-			player1.bow.quaternion.set( 0, 0, 0, 1 );
-		} else if ( dir.y < -0.99999 ) {
-			// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
-			player1.bow.quaternion.set( 1, 0, 0, 0 );
-		} else {
-			axis.set(dir.z, 0, -dir.x).normalize();
-			// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-			player1.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-		}
-	}
-
-	let newArrowDir = scene.getObjectByName("newArrowDir");
-	raycaster.setFromCamera( mouseCoords, cam1);
-	if(newArrowDir)
-	{
-		
-		arrowDir.setDirection(raycaster.ray.direction);
-	}
 
 	if(activePlayer.bow) {
 
@@ -475,12 +451,14 @@ function render()
 	renderer.render(backgroundScene, cameraCube);
 	if(cam1Active) {
 		cam = cam1;
+		raycaster.setFromCamera( mouseCoords, cam );
 		renderer.render(scene, cam1); // Repaint
 	} else {
 		cam = cam2;
+		raycaster.setFromCamera( mouseCoords, cam );
 		renderer.render(scene, cam2); // Repaint
 	}
-
+	
 	time += delta;
 }
 
@@ -646,6 +624,7 @@ function initPlayers() {
 
 	activePlayer = player1;
 	console.log(activePlayer);
+	
 }
 
 function distance(x1, y1, x2, y2) { 
@@ -744,7 +723,7 @@ function onDocumentMouseUp(e) {
 	  mousedownID = -1;
 	}
 	
-	raycaster.setFromCamera( mouseCoords, cam1 );
+	//raycaster.setFromCamera( mouseCoords, cam );
 	
 	// Creates a ball and throws it
 	var ballMass = 1;
@@ -779,11 +758,11 @@ function onDocumentMouseUp(e) {
 		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );	
 		$('.power').css({width: 0+"%",});
 		$('.power-bar').css({value: 0,});
-		player1.rightHandDummy.position.set(-.6, -32, -36);
-		player1.rightArmDummy.rotation.set(0, 0, -.2);
-		player1.rightElbowDummy.rotation.set(0, 0, .2);
-		player1.rightElbow.rotation.set(0, 0, 0);
-		player1.leftShoulderDummy.rotation.set(0, 0, -.6);
+		activePlayer.rightHandDummy.position.set(-.6, -32, -36);
+		activePlayer.rightArmDummy.rotation.set(0, 0, -.2);
+		activePlayer.rightElbowDummy.rotation.set(0, 0, .2);
+		activePlayer.rightElbow.rotation.set(0, 0, 0);
+		activePlayer.leftShoulderDummy.rotation.set(0, 0, -.6);
 	});
 }
 

@@ -66,7 +66,7 @@ var Player = function(_color, _position, _rotation, _bow) {
 	this.leftShoulderDummy.add(this.upperTorsoDummy);
 
 	this.upperTorso = new THREE.Mesh(new THREE.CubeGeometry(7, 6, 15), this.material);
-	this.upperTorso.position.set(0,8,0);
+	//this.upperTorso.position.set(0,8,0);
 	this.upperTorsoDummy.add(this.upperTorso);
 
 	this.head = new THREE.Mesh(new THREE.CubeGeometry(6, 7, 6), this.material);
