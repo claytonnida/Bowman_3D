@@ -86,7 +86,8 @@ var particleCount = 800,
 var particleSystem;
 // Holds the Player objects for our game.
 var players = [];
-
+var player1HitBoxes = [];
+var player2HitBoxes = [];
 var player1;
 var player2;
 
@@ -272,7 +273,15 @@ function render()
 				var directionVector = globalVertex.sub( rigidBodies[index].position );
 
 				var ray = new THREE.Raycaster( rigidBodies[index].position, directionVector.clone().normalize() );
-				var collisionResults = ray.intersectObjects( players );
+				if(cam.position.z > 0)
+				{
+					var collisionResults = ray.intersectObjects( player1HitBoxes );
+				}
+				else
+				{
+					var collisionResults = ray.intersectObjects( player2HitBoxes );
+				}
+				
 				vertexIndex += 3;
 			
 				if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) 
@@ -619,18 +628,20 @@ function initPlayers()
 	// Add player one
 	player1 = new Player(0xff0000, new THREE.Vector3(0, 84, -1125), new THREE.Euler(0, 0, 0), bow1);
 
-	players.push(player1.upperTorso,player1.head,player1.leftShoulder,player1.rightShoulder,player1.leftArm
+	player1HitBoxes.push(player1.upperTorso,player1.head,player1.leftShoulder,player1.rightShoulder,player1.leftArm
 	,player1.rightArm,player1.rightHand,player1.leftHand,player1.lowerTorso,player1.waist,player1.leftThigh
 	,player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot);
+	players.push(player1);
 	scene.add(player1.playerDummy);
 
 	// Add player two
 	player2 = new Player(0x0000ff, new THREE.Vector3(0, 84, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
 
 
-	players.push(player2.upperTorso,player2.head,player2.leftShoulder,player2.rightShoulder,player2.leftArm
+	player2HitBoxes.push(player2.upperTorso,player2.head,player2.leftShoulder,player2.rightShoulder,player2.leftArm
 	,player2.rightArm,player2.rightHand,player2.leftHand,player2.lowerTorso,player2.waist,player2.leftThigh
 	,player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot);
+	players.push(player2);
 	scene.add(player2.playerDummy);
 }
 
