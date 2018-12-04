@@ -687,13 +687,13 @@ function whileMouseDown() {
 	
 	// Update the value based on power.
     var newValue = pow;
-	pow += .05;
+	pow += .035;
 	var barWidth = (newValue / total) * 100;
   
 	if(pow * 100 < 100) {
 		var hitWidth = (pow) * 100 + "%";
 		// While holding mouse down, increase arrow power.
-		ARROW_SPEED += .5;
+		ARROW_SPEED += .6;
 	}
     else {
 		var hitWidth = 100 + "%";
@@ -826,7 +826,6 @@ function removeDebris(object) {
 
 function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel ) 
 {
-	console.log("Createn");
 	if (pos) {
 		object.position.copy( pos );
 	} else {
