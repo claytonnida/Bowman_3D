@@ -232,20 +232,15 @@ function render() {
 		let axis = new THREE.Vector3();
 
 		if ( dir.y > 0.99999 ) {
-			// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
 			player1.bow.quaternion.set( 0, 0, 0, 1 );
 		} else if ( dir.y < -0.99999 ) {
-			// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
 			player1.bow.quaternion.set( 1, 0, 0, 0 );
 		} else {
 			axis.set(dir.z, 0, -dir.x).normalize();
 
-			// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
 			player1.bow.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
 		}
 	}
-
-	player1.update();
 	
 	renderer.autoClear = false;
 	renderer.clear();
@@ -255,8 +250,8 @@ function render() {
 }
 
 // Set up the objects in the world
-function setupScene() 
-{
+function setupScene() {
+
 	// Initialize the floor
 	var floorGeo = new THREE.CubeGeometry(mapW * UNIT_SIZE, 10, mapW * UNIT_SIZE);
 	floorGeo.computeVertexNormals();
@@ -342,8 +337,8 @@ function setupScene()
 	backgroundScene.add(backgroundMesh);
 }
 
-function initPlayers() 
-{
+function initPlayers() {
+
 	// Initialize player one's bow object
 	var bow1 = new THREE.Object3D();
 	bow1.name = "bow1";		
@@ -384,7 +379,9 @@ function initPlayers()
 	scene.add(player2.playerDummy);
 }
 
-function distance(x1, y1, x2, y2) { return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));}
+function distance(x1, y1, x2, y2) { 
+	return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)); 
+}
 
 function getMapSector(v) {
 	var x = Math.floor((v.x + UNIT_SIZE / 2) / UNIT_SIZE + mapW/2);
@@ -400,10 +397,9 @@ function checkWallCollision(v) {
 function onDocumentMouseDown(e) {
 
 	// Reset the power and arrow speed.
-	//console.log(raycaster.ray.origin);
-	pow = .1;
+	pow = 0;
 	ARROWSPEED = 1;
-	
+
 	// Prevent infinite loop.
 	if(mousedownID == -1) {
 		mousedownID = setInterval(whileMouseDown, 100 /*execute every 100ms*/);
@@ -426,7 +422,7 @@ function whileMouseDown() {
 	
 	// Update the value based on power.
     var newValue = pow;
-	pow += .02;
+	pow += .03;
 	var barWidth = (newValue / total) * 100;
   
 	if(pow * 100 < 100) {
@@ -438,10 +434,32 @@ function whileMouseDown() {
     // Update the data of the CSS.
 	$('.power').css({width: hitWidth,});
 	$('.power-bar').css({value: newValue,});
+
+	// Make the player's arm pull back on the string
+	if(player1.rightHandDummy.position.y > -50.9999) {
+		player1.rightHandDummy.position.y -= .7;	
+		// player1.rightHandDummy.position.y = -56;
+	}// else {
+		// player1.rightHandDummy.position.y -= .4;	
+	// }
+
+	if(player1.leftShoulderDummy.rotation.z < -.079999) {
+		player1.leftShoulderDummy.rotateZ(.02);
+	}
+
+	if(player1.rightArmDummy.rotation.z > -.42999) {
+		player1.rightArmDummy.rotateZ(-.01);
+		player1.rightElbow.rotateZ(-.03);
+	}
+
+	if(player1.rightElbowDummy.rotation.z < 2.1) {
+		player1.rightElbowDummy.rotateZ(.07);
+	}
+
+
 }
 
-function onDocumentMouseMove(e)
-{
+function onDocumentMouseMove(e) {
 	mouseCoords.set(
 		 ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
 		-( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
@@ -461,10 +479,11 @@ function onDocumentMouseUp(e) {
 	var ballMass = 1;
 	var ballRadius = 2;
 
-	var loader = new THREE.PLYLoader();
 	loader.load( 'models/Arrow.ply', function ( geometry ) {
 		geometry.computeVertexNormals();
+
 		var material = new THREE.MeshStandardMaterial( { color: 0x0055ff, flatShading: true } );
+
 		var mesh3 = new THREE.Mesh( geometry, material );
 		mesh3.position.y = 100;
 		mesh3.position.x = -100;
@@ -490,6 +509,20 @@ function onDocumentMouseUp(e) {
 		$('.power').css({width: 0+"%",});
 		$('.power-bar').css({value: 0,});
 	});
+
+
+	// Reset the player's right arm
+	console.log(player1.rightHandDummy.position);
+	console.log(player1.rightElbowDummy.rotation.z);
+	console.log(player1.rightArmDummy.rotation.z);
+	console.log(player1.leftShoulderDummy.rotation.z);
+	player1.rightHandDummy.position.set(-.6, -32, -36);
+	player1.rightArmDummy.rotation.set(0, 0, -.2);
+	player1.rightElbowDummy.rotation.set(0, 0, .2);
+	player1.rightElbow.rotation.set(0, 0, 0);
+	player1.leftShoulderDummy.rotation.set(0, 0, -.6);
+
+
 }
 
 // Handle window resizing
@@ -557,9 +590,7 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 	body.setFriction( 0.5 );
 
 	if ( vel ) {
-		
 		body.setLinearVelocity( new Ammo.btVector3( vel.x, vel.y, vel.z ) );
-		
 	}
 	
 	if ( angVel ) {
