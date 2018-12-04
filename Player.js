@@ -16,6 +16,7 @@ var Player = function(_color, _position, _rotation, _bow) {
 	// Set a dummy object for where the arrows will rest
 	let middle = new THREE.Mesh( new THREE.CubeGeometry(1,2.5,1), new THREE.MeshPhongMaterial({color: 0x55ff00}));
 	middle.position.set(-.7, -20, -38);
+	middle.name = "middle";
 	this.bow.add(middle);
 
 	// The code below initializes the hierarchy of models for the player.

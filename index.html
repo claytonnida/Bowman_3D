@@ -745,7 +745,8 @@ function onDocumentMouseUp(e) {
 		ballShape.setMargin( margin );
 		
 		pos.copy( raycaster.ray.direction );
-		pos.add( raycaster.ray.origin );
+		//pos.add( raycaster.ray.origin );
+		pos.add( player1.bow.getObjectByName("middle").getWorldPosition() );
 		
 		quat.set( 0, 0, 0, 1 );
 		
@@ -815,7 +816,7 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 	transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
 	
 	var motionState = new Ammo.btDefaultMotionState( transform );
-	var localInertia = new Ammo.btVector3( 0, 0, 0 );
+	var localInertia = new Ammo.btVector3( 0, 0, 1 );
 	
 	physicsShape.calculateLocalInertia( mass, localInertia );
 	
@@ -880,6 +881,7 @@ function updatePhysics( deltaTime )
 			var q = transformAux1.getRotation();
 			
 			objThree.position.set(p.x(), p.y(), p.z());
+			objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
 			if(cam.position.z < 0)
 			{
 				objThree.rotation.y = (4.7124);
@@ -890,7 +892,6 @@ function updatePhysics( deltaTime )
 				objThree.rotation.y = (-4.7124);
 				objThree.userData.collided = false;
 			}
-			//objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
 			
 		}
 	}
