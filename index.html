@@ -147,22 +147,8 @@ function init()
 	projector = new THREE.Projector(); // Used in bullet projection
 	scene = new THREE.Scene(); // Holds all objects in the canvas
 
-	cam1 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
-	cam1.position.y = 150;
-	cam1.position.x = 0;
-	cam1.position.z = -1325;
-	cam1.lookAt(new THREE.Vector3( 0, -100, 825 ));
-	scene.add(cam1);
-
-	cam2 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
-	cam2.position.y = 150;
-	cam2.position.x = 0;
-	cam2.position.z = 1325;
-	cam2.lookAt(new THREE.Vector3( 0, -100, -825 ));
-	scene.add(cam2);
-	activeCam = cam1;
-	// World objects
 	setupScene();
+	initCameras();
 	initPlayers();
 	
 	// Handle drawing as WebGL (faster than Canvas but less supported)
@@ -205,6 +191,27 @@ function init()
 // sort the particles which enables
 // the behaviour we want
 
+}
+
+/**
+ * Initializes the camera's behind the players
+ * @author Chandler Davis
+ */
+function initCameras() {
+	cam1 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
+	cam1.position.y = 150;
+	cam1.position.x = 0;
+	cam1.position.z = -1325;
+	cam1.lookAt(new THREE.Vector3( 0, -100, 825 ));
+	scene.add(cam1);
+
+	cam2 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
+	cam2.position.y = 150;
+	cam2.position.x = 0;
+	cam2.position.z = 1325;
+	cam2.lookAt(new THREE.Vector3( 0, -100, -825 ));
+	scene.add(cam2);
+	activeCam = cam1;
 }
 
 // Helper function for browser frames
@@ -485,18 +492,22 @@ function setupScene() {
 	var loader = new THREE.PLYLoader();
 				loader.load( 'models/wind.ply', function ( geometry ) {
 					geometry.computeVertexNormals();
+					
 					var material = new THREE.MeshStandardMaterial( { color: 0x4d2600, flatShading: true } );
 					var mesh = new THREE.Mesh( geometry, material );
+					
 					mesh.position.y = 75;
 					mesh.position.x = 100;
 					mesh.position.z = -900;
 					mesh.rotation.x = - Math.PI / 2;
+					
 					let angle = Math.atan2(wind.z,-wind.x);
 					mesh.rotation.z = angle;
 					mesh.rotation.z += (1.5708*2); 
 					mesh.scale.multiplyScalar( .1 );
 					mesh.castShadow = true;
 					mesh.receiveShadow = true;
+					
 					scene.add( mesh );
 				} );
 
