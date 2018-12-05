@@ -254,7 +254,7 @@ function render()
 	var speed = delta * BULLET_SPEED;
 
 	updatePhysics( speed );
-	
+
 	for (let index = 0; index < rigidBodies.length; index++) 
 	{
 		let thisArrow = rigidBodies[index];
@@ -427,13 +427,14 @@ function aim() {
 	var dir = raycaster.ray.direction;
 	var axis = new THREE.Vector3();
 
-	if(activeCam.position.z < 0)
-	{
+	// Set the axis depending on which player is active
+	if(activePlayer == player1) {
 		axis.set(dir.z, 0, -dir.x).normalize();
 	} else {
 		axis.set(-dir.z, 0, dir.x).normalize();
 	}
 	
+	// Set the aim cube's quaternion's direction - avoiding 1 and -1
 	if(activePlayer.bow) {
 		if ( dir.y > 0.99999 ) {
 			activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
