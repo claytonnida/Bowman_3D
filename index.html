@@ -254,24 +254,16 @@ function render()
 	var speed = delta * BULLET_SPEED;
 
 	updatePhysics( speed );
+	
 	for (let index = 0; index < rigidBodies.length; index++) 
 	{
 		let thisArrow = rigidBodies[index];
-		if(thisArrow.position.x > 2000 || thisArrow.position.x < -2000 || thisArrow.position.z > 2000 || thisArrow.position.z < -2000 
-		|| thisArrow.position.y < 10)
-		{
+		if(thisArrow.position.x > 2000 || thisArrow.position.x < -2000 
+		|| thisArrow.position.z > 2000 || thisArrow.position.z < -2000 
+		|| thisArrow.position.y < 10) {
 
-			if(activeCam == cam1) {
-				activeCam = cam2;
-			} else {
-				activeCam = cam1;
-			}
+			switchSides();
 
-			if(activePlayer == player1) {
-							activePlayer = player2;
-						} else {
-							activePlayer = player1;
-						}
 			scene.remove(thisArrow);
 			rigidBodies.shift();
 			break;
@@ -285,12 +277,9 @@ function render()
 				var directionVector = globalVertex.sub( rigidBodies[index].position );
 
 				var ray = new THREE.Raycaster( rigidBodies[index].position, directionVector.clone().normalize() );
-				if(activeCam.position.z > 0)
-				{
+				if(activeCam.position.z > 0) {
 					var collisionResults = ray.intersectObjects( player1HitBoxes );
-				}
-				else
-				{
+				} else {
 					var collisionResults = ray.intersectObjects( player2HitBoxes );
 				}
 				
@@ -404,82 +393,74 @@ function render()
 					
 					}
 
-						if(activeCam == cam1) {
-							activeCam = cam2;
-						} else {
-							activeCam = cam1;
-						}
-
-						if(activePlayer == player1) {
-							activePlayer = player2;
-						} else {
-							activePlayer = player1;
-						}
-
-						rigidBodies.shift();
+					switchSides();
+					rigidBodies.shift();
 				}
 			}
 			
 		}
 	}
 	
+	cameraCube.rotation.y += wind.x * 0.0001;
+	cameraCube.rotation.z = ( activeCam.rotation.z );
+	cameraCube.rotation.x = ( activeCam.rotation.x );
 	
-		raycaster.setFromCamera( mouseCoords, activeCam);
+	renderer.autoClear = false;
+	renderer.gammaOutput = true;
+
+	renderer.clear();
+	renderer.render(backgroundScene, cameraCube);
+	renderer.render(scene, activeCam); // Repaint
+
+	aim();
+
+	time += delta;
+}
+
+/**
+ * Make the active player change look in a direction with respect to the mouse.
+ * @author Chandler Davis
+ */
+function aim() {
+	raycaster.setFromCamera( mouseCoords, activeCam);
+
+	var dir = raycaster.ray.direction;
+	var axis = new THREE.Vector3();
 
 	if(activeCam.position.z < 0)
 	{
-		cameraCube.rotation.y += wind.x * 0.0001;
-		cameraCube.rotation.z = ( activeCam.rotation.z );
-		cameraCube.rotation.x = ( activeCam.rotation.x );
-		renderer.autoClear = false;
-		renderer.gammaOutput = true;
-		renderer.clear();
-		renderer.render(backgroundScene, cameraCube);
-			if(activePlayer.bow) {
-			let dir = raycaster.ray.direction;
-			let axis = new THREE.Vector3();
-			if ( dir.y > 0.99999 ) {
-				// player1.leftHandDummy.quaternion.set( 0, 0, 0, 1 );
-				activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
-			} else if ( dir.y < -0.99999 ) {
-				// player1.leftHandDummy.quaternion.set( 1, 0, 0, 0 );
-				activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
-			} else {
-				axis.set(dir.z, 0, -dir.x).normalize();
-				// player1.leftHandDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-				activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-			}
-		}
-	}
-	else
-	{
-		cameraCube.rotation.y += wind.x * 0.0001;
-		cameraCube.rotation.z = ( activeCam.rotation.z );
-		cameraCube.rotation.x = ( activeCam.rotation.x );
-		renderer.autoClear = false;
-		renderer.gammaOutput = true;
-		renderer.clear();
-		renderer.render(backgroundScene, cameraCube);
-		if(activePlayer.bow) {
-			let dir = raycaster.ray.direction;
-			let axis = new THREE.Vector3();
-			if ( dir.y > 0.99999 ) {
-				activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
-			} else if ( dir.y < -0.99999 ) {
-				activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
-			} else {
-				axis.set(-dir.z, 0, dir.x).normalize();
-				activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-			}
-		}
+		axis.set(dir.z, 0, -dir.x).normalize();
+	} else {
+		axis.set(-dir.z, 0, dir.x).normalize();
 	}
 	
+	if(activePlayer.bow) {
+		if ( dir.y > 0.99999 ) {
+			activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
+		} else if ( dir.y < -0.99999 ) {
+			activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
+		} else {
+			activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+		}
+	}
+}
 
-		raycaster.setFromCamera( mouseCoords, activeCam);
-		renderer.render(scene, activeCam); // Repaint
+/**
+ * Switch the active player and active camera
+ * @author Chandler Davis
+ */
+function switchSides() {
+	if(activeCam == cam1) {
+		activeCam = cam2;
+	} else {
+		activeCam = cam1;
+	}
 
-
-	time += delta;
+	if(activePlayer == player1) {
+		activePlayer = player2;
+	} else {
+		activePlayer = player1;
+	}
 }
 
 // Set up the objects in the world
