@@ -278,13 +278,60 @@ function initCameras() {
 	activeCam = cam1;
 }
 
-// Animation.
-function animate() {
-	if (runAnim) {	
-		requestAnimationFrame(animate); 
-		updateParticles();
+function initPlayers() {
+
+// Initialize player one's bow object
+var bow1 = new THREE.Object3D();
+bow1.name = "bow1";		
+
+// Initialize player two's bow object
+var bow2 = new THREE.Object3D();
+bow2.name = "bow2";
+// Load the PLY model for the bows and assign the meshes to their corresponding objects.
+loader.load( 'models/bow.ply', function ( geometry ) {
+	geometry.computeVertexNormals();
+	
+	var material = new THREE.MeshStandardMaterial( { color: 0x7c440b, flatShading: true } );
+	var mesh = new THREE.Mesh( geometry, material );
+	mesh.rotateZ(1.5708);
+	mesh.rotateY(2 * 1.5708);
+	mesh.scale.multiplyScalar( .35 );
+
+	if(player1.bow) {
+		player1.bow.add(mesh);
 	}
-	render();
+
+	if(player2.bow) {
+		player2.bow.add(mesh.clone());
+	}
+});
+
+// Initialize player one and add to scene
+player1 = new Player(0xff0000, new THREE.Vector3(0, 60, -1125), new THREE.Euler(0, 0, 0), bow1);
+
+players.push(player1);
+scene.add(player1.playerDummy);
+
+// Add player 's meshes to array for collision detection
+player1HitBoxes.push(player1.upperTorso,player1.leftShoulder,player1.rightShoulder,player1.leftArm,
+player1.rightArm,player1.rightHand,player1.leftHand,player1.waist,player1.leftThigh,player1.head,
+player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot,
+player1.leftElbow,player1.rightElbow,player1.lowerTorso, player1.upperTorsoDummy);
+
+// Initialize player two and add to scene
+player2 = new Player(0x0000ff, new THREE.Vector3(0, 60, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
+
+players.push(player2);
+scene.add(player2.playerDummy);
+
+// Add player 's meshes to array for collision detection
+player2HitBoxes.push(player2.upperTorso,player2.leftShoulder,player2.rightShoulder,player2.leftArm,
+player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh,player2.head,
+player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot,
+player2.leftElbow,player2.rightElbow,player2.lowerTorso, player2.upperTorsoDummy);
+
+// Set player one as the first player to move and shoot
+activePlayer = player1;
 }
 
 /**
@@ -329,12 +376,13 @@ function render()
 	cameraCube.rotation.z = ( activeCam.rotation.z );
 	cameraCube.rotation.x = ( activeCam.rotation.x );
 	
+	
 	renderer.autoClear = false;
 	renderer.gammaOutput = true;
 
 	renderer.clear();
 	renderer.render(backgroundScene, cameraCube);
-	renderer.render(scene, activeCam); // Repaint
+	renderer.render(scene, activeCam);
 
 	aim();
 }
@@ -427,7 +475,7 @@ for (let index = 0; index < arrows.length; index++)
 					// Update the health of the player and spawn a particle system for blood-like effects.
 					doCollision(arrowClone);
 
-					// Switch to other player and camera
+					// Switch to other player and camera.
 					switchSides();
 					
 					// Remove the arrow from the array.
@@ -436,20 +484,6 @@ for (let index = 0; index < arrows.length; index++)
 			}
 		}
 	}
-
-	cameraCube.rotation.y += wind.x * 0.0001;
-	cameraCube.rotation.z = ( activeCam.rotation.z );
-	cameraCube.rotation.x = ( activeCam.rotation.x );
-	
-	renderer.autoClear = false;
-	renderer.gammaOutput = true;
-
-	renderer.clear();
-	renderer.render(backgroundScene, cameraCube);
-	renderer.render(scene, activeCam); // Repaint
-
-	// Make the mouse aim the active player's bow.
-	aim();
 }
 
 /**
@@ -591,6 +625,8 @@ function switchSides() {
 	}
 }
 
+<<<<<<< HEAD
+=======
 /**
  * Initialize the player objects
  * @author Chandler Davis, Clayton Nida
@@ -649,6 +685,7 @@ function initPlayers() {
 	activePlayer = player1;
 }
 
+>>>>>>> c4872a6614ea97505d7d1bce421b86aae7c65355
 /**
 * Simple function to create a new vector using random values between -2PI and 2PI.
 * @Author Clayton Nida
@@ -667,6 +704,22 @@ function initPhysics() {
 	
 	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
 	physicsWorld.setGravity( new Ammo.btVector3( 0, -GRAVITY/50, 0) );
+}
+
+// Animation.
+function animate() {
+	if (runAnim) {	
+		requestAnimationFrame(animate); 
+		updateParticles();
+	}
+	render();
+}
+
+function onDocumentMouseMove(e) {
+	mouseCoords.set(
+		 ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
+		-( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
+	);
 }
 
 function onDocumentMouseDown(e) {
@@ -716,36 +769,6 @@ function whileMouseDown() {
 	animatePullBack();
 }
 
-/**
- * Animates the active player pulling back on the bowstring
- * @author Chandler Davis
- */
-function animatePullBack() {
-	if(activePlayer.rightHandDummy.position.y > -50.9999) {
-		activePlayer.rightHandDummy.position.y -= .7;	
-	}
-
-	if(activePlayer.leftShoulderDummy.rotation.z < -.079999) {
-		activePlayer.leftShoulderDummy.rotateZ(.02);
-	}
-
-	if(activePlayer.rightArmDummy.rotation.z > -.42999) {
-		activePlayer.rightArmDummy.rotateZ(-.01);
-		activePlayer.rightElbow.rotateZ(-.03);
-	}
-
-	if(activePlayer.rightElbowDummy.rotation.z < 2.1) {
-		activePlayer.rightElbowDummy.rotateZ(.07);
-	}
-}
-
-function onDocumentMouseMove(e) {
-	mouseCoords.set(
-		 ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
-		-( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
-	);
-}
-
 function onDocumentMouseUp(e) {
 	if(mousedownID != -1) 
 	{  //Only stop if exists
@@ -789,6 +812,29 @@ function onDocumentMouseUp(e) {
 		
 		resetPullBack();
 	});
+}
+
+/**
+ * Animates the active player pulling back on the bowstring
+ * @author Chandler Davis
+ */
+function animatePullBack() {
+	if(activePlayer.rightHandDummy.position.y > -50.9999) {
+		activePlayer.rightHandDummy.position.y -= .7;	
+	}
+
+	if(activePlayer.leftShoulderDummy.rotation.z < -.079999) {
+		activePlayer.leftShoulderDummy.rotateZ(.02);
+	}
+
+	if(activePlayer.rightArmDummy.rotation.z > -.42999) {
+		activePlayer.rightArmDummy.rotateZ(-.01);
+		activePlayer.rightElbow.rotateZ(-.03);
+	}
+
+	if(activePlayer.rightElbowDummy.rotation.z < 2.1) {
+		activePlayer.rightElbowDummy.rotateZ(.07);
+	}
 }
 
 /**
