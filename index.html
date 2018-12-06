@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>WebGL Multiplayer Target</title>
+	<title>CS336 Final Project - 3D Bowman Game
+	</title>
 
 	<link rel="stylesheet" type="text/css" href="index_style.css">
 	
@@ -86,17 +87,24 @@ var particleSystem;
 
 // Holds the Player objects for our game.
 var players = [];
+
+// These are used for collision detection on the player's body parts
 var player1HitBoxes = [];
 var player2HitBoxes = [];
 
+// The player who's turn it is to shoot.
 var activePlayer;
 
+// The two player objects.
 var player1;
 var player2;
 
+// The cameras behind players one and two, respectively.
 var cam1;
 var cam2;
-var activeCam;
+
+// Which camera is currently used for rendering
+var activeCam; 
 
 // Physics variables
 var collisionConfiguration;
@@ -215,14 +223,17 @@ function initCameras() {
 
 // Helper function for browser frames
 function animate() {
-	if (runAnim) {	requestAnimationFrame(animate); update();}
+	if (runAnim) {	
+		requestAnimationFrame(animate); 
+		update();
+	}
 	render();
 }
+
 function update()
 {
 	if(particles.vertices.length > 0)
 	{
-		//particleSystem.rotation.y += 0.01;
 		for (let i = 0; i < particleCount; i++) 
 		{
 			var particle = particles.vertices[i];
@@ -238,6 +249,7 @@ function update()
 		}
 	}
 }
+
 // Update and display
 function render() 
 {
@@ -399,6 +411,7 @@ function render()
 					
 					}
 
+					// Switch to other player and camera
 					switchSides();
 					rigidBodies.shift();
 				}
@@ -418,6 +431,7 @@ function render()
 	renderer.render(backgroundScene, cameraCube);
 	renderer.render(scene, activeCam); // Repaint
 
+	// Make the mouse aim the active player's bow
 	aim();
 
 	time += delta;
@@ -604,26 +618,29 @@ function initPlayers() {
 		}
 	});
 
-	// Add player one
+	// Initialize player one and add to scene
 	player1 = new Player(0xff0000, new THREE.Vector3(0, 60, -1125), new THREE.Euler(0, 0, 0), bow1);
 
+	players.push(player1);
+	scene.add(player1.playerDummy);
+	
+	// Add player 's meshes to array for collision detection
 	player1HitBoxes.push(player1.upperTorso,player1.leftShoulder,player1.rightShoulder,player1.leftArm
 	,player1.rightArm,player1.rightHand,player1.leftHand,player1.waist,player1.leftThigh,player1.head,
 	player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot,player1.leftElbow,player1.rightElbow,player1.lowerTorso, player1.upperTorsoDummy);
-	players.push(player1);
-	scene.add(player1.playerDummy);
 
-
-	// Add player two
+	// Initialize player two and add to scene
 	player2 = new Player(0x0000ff, new THREE.Vector3(0, 60, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
-
-	player2HitBoxes.push(player2.upperTorso,player2.leftShoulder,player2.rightShoulder,player2.leftArm
-	,player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh,player2.head,
-	player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot,player2.leftElbow,player2.rightElbow,player2.lowerTorso, player2.upperTorsoDummy);
 	
 	players.push(player2);
 	scene.add(player2.playerDummy);
 
+	// Add player 's meshes to array for collision detection
+	player2HitBoxes.push(player2.upperTorso,player2.leftShoulder,player2.rightShoulder,player2.leftArm
+	,player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh,player2.head,
+	player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot,player2.leftElbow,player2.rightElbow,player2.lowerTorso, player2.upperTorsoDummy);
+	
+	// Set player one as the first player to move and shoot
 	activePlayer = player1;
 }
 
@@ -649,6 +666,7 @@ function onDocumentMouseDown(e) {
 	ARROW_SPEED = 1;
 	$('.power').css({width: 0+"%",});
 	$('.power-bar').css({value: 0,});
+
 	// Prevent infinite loop.
 	if(mousedownID == -1) {
 		mousedownID = setInterval(whileMouseDown, 100);
@@ -657,16 +675,12 @@ function onDocumentMouseDown(e) {
 
 function whileMouseDown() {
 
-	if(activeCam.position.z < 0)
-	{
+	if(activeCam.position.z < 0) {
 		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))+ARROW_SPEED) );
-	}
-	else
-	{
+	} else {
 		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))-ARROW_SPEED) );
 	}
 	
-
 	// Grab CSS of the power bar.
 	var value = $('.power-bar').data('value');
 	var total = $('.power-bar').data('total');
@@ -689,6 +703,14 @@ function whileMouseDown() {
 	$('.power-bar').css({value: newValue,});
 
 	// Make the player's arm pull back on the string
+	animatePullBack();
+}
+
+/**
+ * Animates the active player pulling back on the bowstring
+ * @author Chandler Davis
+ */
+function animatePullBack() {
 	if(activePlayer.rightHandDummy.position.y > -50.9999) {
 		activePlayer.rightHandDummy.position.y -= .7;	
 	}
@@ -705,8 +727,6 @@ function whileMouseDown() {
 	if(activePlayer.rightElbowDummy.rotation.z < 2.1) {
 		activePlayer.rightElbowDummy.rotateZ(.07);
 	}
-
-
 }
 
 function onDocumentMouseMove(e) {
@@ -756,12 +776,21 @@ function onDocumentMouseUp(e) {
 		ballBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );	
 		$('.power').css({width: 0+"%",});
 		$('.power-bar').css({value: 0,});
-		activePlayer.rightHandDummy.position.set(-.6, -32, -36);
-		activePlayer.rightArmDummy.rotation.set(0, 0, -.2);
-		activePlayer.rightElbowDummy.rotation.set(0, 0, .2);
-		activePlayer.rightElbow.rotation.set(0, 0, 0);
-		activePlayer.leftShoulderDummy.rotation.set(0, 0, -.6);
+		
+		resetPullBack();
 	});
+}
+
+/**
+ * Resets the player's bow arm back to initial state.
+ * @author Chandler Davis
+ */
+function resetPullBack() {
+	activePlayer.rightHandDummy.position.set(-.6, -32, -36);
+	activePlayer.rightArmDummy.rotation.set(0, 0, -.2);
+	activePlayer.rightElbowDummy.rotation.set(0, 0, .2);
+	activePlayer.rightElbow.rotation.set(0, 0, 0);
+	activePlayer.leftShoulderDummy.rotation.set(0, 0, -.6);
 }
 
 // Handle window resizing

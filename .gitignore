@@ -1,10 +1,3 @@
-# three.js files and directory
-three.js-master/
-three.js
-
-# teal book
-teal_book/
-
 # Sublime text files
 *.sublime-project
 *.sublime-workspace
