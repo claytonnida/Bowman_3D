@@ -40,33 +40,18 @@
 </body>
 
 <script>
-
-// Initalize the map where '1' represents the end of clipspace.
-var map = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1,],
-		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
-		  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1,]];
-var mapW = map.length;
-var mapH = map[0].length;
-
-// Game Constants
+// Game Constants.
 var WIDTH = window.innerWidth;
 var HEIGHT = window.innerHeight;
 var ASPECT_RATIO = WIDTH / HEIGHT;
-var UNIT_SIZE = 250;
+var FLOOR_UNIT_SIZE = 250;
 var PHYS_SPEED = 500;
 var PROJECTILE_DAMAGE = 333.3;
 var ARROW_SPEED = 1;
 var GRAVITY = 9.81;
 
-// Global vars
-var scene, backgroundScene, backgroundCamera, renderer, controls, clock, projector, model, skin;
+// Global Variables.
+var scene, backgroundScene, backgroundCamera, renderer, clock;
 var runAnim = true;
 var mouseCoords = new THREE.Vector2();
 var raycaster = new THREE.Raycaster();
@@ -84,7 +69,7 @@ var particleSystem;
 // Holds the Player objects for our game.
 var players = [];
 
-// These are used for collision detection on the player's body parts
+// These are used for collision detection on the player's body parts.
 var player1HitBoxes = [];
 var player2HitBoxes = [];
 
@@ -102,7 +87,7 @@ var cam2;
 // Which camera is currently used for rendering
 var activeCam; 
 
-// Physics variables
+// Physics variables.
 var collisionConfiguration;
 var dispatcher;
 var broadphase;
@@ -111,18 +96,16 @@ var physicsWorld;
 var margin = 0.05;
 var wind;
 
-//  Variables used for arrows
+//  Variables used for arrows.
 var arrows = [];
 var pos = new THREE.Vector3();
 var quat = new THREE.Quaternion();
 var transformAux1 = new Ammo.btTransform();
 
 // Initialize and run on document ready
-$(document).ready(function() 
-{
+$(document).ready(function() {
 	$('body').append('<div id="intro">Click to start</div>');
-	$('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) 
-	{
+	$('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) {
 		e.preventDefault();
 		$(this).fadeOut();
 		init();
@@ -132,57 +115,145 @@ $(document).ready(function()
 	});
 });
 
-// Setup
-function init() 
-{
-	clock = new THREE.Clock(); // Used in render() for controls.update()
-	projector = new THREE.Projector(); // Used in bullet projection
-	scene = new THREE.Scene(); // Holds all objects in the canvas
+// Setup.
+function init() {
+	clock = new THREE.Clock();
+	scene = new THREE.Scene();
 
 	setupScene();
 	initCameras();
 	initPlayers();
 	
-	// Handle drawing as WebGL (faster than Canvas but less supported)
 	renderer = new THREE.WebGLRenderer();
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 	renderer.setSize(WIDTH, HEIGHT);
+	
 	var spotLight = new THREE.SpotLight( 0xF7EFBE );
 	spotLight.position.set( 0, 1000, 0 );
-
 	spotLight.castShadow = true;
-
-	spotLight.shadow.mapSize.width = mapW * UNIT_SIZE, 10, mapW * UNIT_SIZE;
-	spotLight.shadow.mapSize.height = mapW * UNIT_SIZE, 10, mapW * UNIT_SIZE;
-
+	spotLight.shadow.mapSize.width = 10 * FLOOR_UNIT_SIZE, 10, 10 * FLOOR_UNIT_SIZE;
+	spotLight.shadow.mapSize.height = 10 * FLOOR_UNIT_SIZE, 10, 10 * FLOOR_UNIT_SIZE;
 	spotLight.shadow.camera.near = 1;
 	spotLight.shadow.camera.far = 10000;
 	spotLight.shadow.camera.fov = 60;
 
 	scene.add(spotLight);
 	
-	// Add the canvas to the document
 	document.body.appendChild(renderer.domElement);
 	
-	// Track mouse position so we know where to shoot
+	// Track mouse position.
 	document.addEventListener('mousedown', onDocumentMouseDown, false);
 	document.addEventListener('mouseup', onDocumentMouseUp, false);
 	document.addEventListener('mousemove', onDocumentMouseMove, false);
 	
-	// Display HUD
+	// Display player health and power bar.
 	$('body').append('<div id="p1" class="health-bar" data-total="1000" data-value="1000"><div class="bar"><div class="hit"></div></div></div>');
 	$('body').append('<div id="p2" class="health-bar2" data-total="1000" data-value="1000"><div class="bar2"><div class="hit2"></div></div></div>');
 	$('body').append('<div class="power-bar" data-total="1000" data-value="0"><div class="power"></div></div>');
-	
-	// Set up "hurt" flash
-	$('body').append('<div id="hurt"></div>');
-	$('#hurt').css({width: WIDTH, height: HEIGHT,});
-	
-// also update the particle system to
-// sort the particles which enables
-// the behaviour we want
+}
 
+// Set up the objects in the world
+function setupScene() {
+
+// Initialize the floor
+var floorGeo = new THREE.CubeGeometry(10 * FLOOR_UNIT_SIZE, 10, 10 * FLOOR_UNIT_SIZE);
+floorGeo.computeVertexNormals();
+floorGeo.computeFaceNormals();
+
+loader = new THREE.TextureLoader();
+loader.load('/three.js-master/examples/textures/terrain/grasslight-big.jpg', function( texture ){
+	var floorMat = new THREE.MeshBasicMaterial( {
+		map: texture
+	});
+	var floor = new THREE.Mesh(floorGeo, floorMat);
+scene.add(floor);
+});
+
+loader = new THREE.PLYLoader();
+			loader.load( 'models/wind.ply', function ( geometry ) {
+				geometry.computeVertexNormals();
+				
+				var material = new THREE.MeshStandardMaterial( { color: 0x4d2600, flatShading: true } );
+
+				var rooster1 = new THREE.Mesh( geometry, material );
+				
+				rooster1.position.y = 75;
+				rooster1.position.x = 100;
+				rooster1.position.z = -900;
+				
+				let angle = Math.atan2(wind.z,-wind.x);
+				rooster1.rotation.x = - Math.PI / 2;
+				rooster1.rotation.z = angle;
+				rooster1.rotation.z += (1.5708*2); 
+				rooster1.scale.multiplyScalar(.1);
+				rooster1.castShadow = true;
+				rooster1.receiveShadow = true;
+				
+				scene.add(rooster1);
+
+				var rooster2 = new THREE.Mesh( geometry, material );
+
+				rooster2.position.y = 75;
+				rooster2.position.x = -100;
+				rooster2.position.z = 900;
+
+				angle = Math.atan2(wind.z,-wind.x);
+				rooster2.rotation.x = - Math.PI / 2;
+				rooster2.rotation.z = angle;
+				rooster2.rotation.z += (1.5708*2); 
+				rooster2.scale.multiplyScalar(.1);
+				rooster2.castShadow = true;
+				rooster2.receiveShadow = true;
+
+				scene.add(rooster2);
+			} );
+					
+// Lighting
+var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
+directionalLight1.position.set(.5, .9, .5);
+directionalLight1.castShadow = true;
+scene.add(directionalLight1);
+
+var directionalLight2 = new THREE.DirectionalLight(0xF7EFBE, .5);
+directionalLight2.position.set(-.5, .9, -.5);
+directionalLight2.castShadow = true;
+scene.add(directionalLight2);
+
+// Background
+
+// Create your background scene
+backgroundScene = new THREE.Scene();
+backgroundCamera = new THREE.Camera();
+cameraCube = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 100000 );
+
+var r = "textures/skybox/";
+			var urls = [ r + "skybox_px.jpg", r + "skybox_nx.jpg",
+						 r + "skybox_py.jpg", r + "skybox_ny.jpg",
+						 r + "skybox_pz.jpg", r + "skybox_nz.jpg" ];
+textureCube = new THREE.CubeTextureLoader().load( urls );
+textureCube.format = THREE.RGBFormat;
+textureCube.mapping = THREE.CubeReflectionMapping;
+textureCube.encoding = THREE.sRGBEncoding;
+var cubeShader = THREE.ShaderLib[ "cube" ];
+			var cubeMaterial = new THREE.ShaderMaterial( {
+				fragmentShader: cubeShader.fragmentShader,
+				vertexShader: cubeShader.vertexShader,
+				uniforms: cubeShader.uniforms,
+				depthWrite: false,
+				side: THREE.BackSide
+			} );
+			cubeMaterial.uniforms[ "tCube" ].value = textureCube;
+			Object.defineProperty( cubeMaterial, 'map', {
+				get: function () {
+					return this.uniforms.tCube.value;
+				}
+			} );
+			cubeMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 100, 100, 100 ), cubeMaterial );
+			
+			backgroundScene.add( cubeMesh );
+// Add the background to the scene.
+backgroundScene.add(cameraCube);
 }
 
 /**
@@ -206,56 +277,46 @@ function initCameras() {
 	activeCam = cam1;
 }
 
-// Helper function for browser frames
+// Animation.
 function animate() {
 	if (runAnim) {	
 		requestAnimationFrame(animate); 
-		update();
+		updateParticles();
 	}
 	render();
 }
 
-function update()
-{
-	if(particles.vertices.length > 0)
-	{
-		for (let i = 0; i < particleCount; i++) 
-		{
+/**
+* A function to move the particles in our particle system.
+* @Author Clayton Nida
+*/
+function updateParticles() {
+	// Check that particles exist.
+	if(particles.vertices.length > 0) {
+
+		// Loop through our particles and update the posistions with random values within a close range.
+		// This is done to keep the particles close, giving the look that the blood came from a certain location. 
+		for (let i = 0; i < particleCount; i++) {
 			var particle = particles.vertices[i];
 			particle.x = getRandomArbitrary(particle.x - 1, particle.x + 1);
-			 particle.y = getRandomArbitrary(particle.y - .7, particle.y);
-			 particle.z = getRandomArbitrary(particle.z - 1, particle.z + 1);
+			particle.y = getRandomArbitrary(particle.y - .7, particle.y);
+			particle.z = getRandomArbitrary(particle.z - 1, particle.z + 1);
 		}
+
+		// Flag the particles for an update.
 		particles.verticesNeedUpdate = true;
-		if(particles.vertices[0].y < -50)
-		{
+
+		// Check to see if the blood fell beneath the map, if so, remove the system and clear the array.
+		if(particles.vertices[0].y < -50) {
 			particles = new THREE.Geometry();
 			scene.remove(scene.getObjectByName("particleSys"));
 		}
 	}
 }
 
-// Update and display
+// Update and display.
 function render() 
 {
-	// Pull the current health values from the CSS
-	var player1Health = $('.health-bar').data('value');
-	var player2Health = $('.health-bar2').data('value');
-	var total = $('.health-bar').data('total');
-	// Check if either players health has dropped to 1 or less.
-	if(player1Health <= 1 || player2Health <= 1)
-	{
-		// A string is stored of the winning player based on which player ended with more health.
-		let winner = player1Health > player2Health ? "Player 1" : "Player 2";
-		// Stop animation and restart the game.
-		runAnim = false;
-		$(renderer.domElement).fadeOut();
-		$('#intro').fadeIn();
-		$('#intro').html(winner +' wins! Click to restart...');
-		$('#intro').one('click', function() {
-			location = location;
-		});
-	}
 	// Set a time and physics step speed based on THREE.js Clock.
 	var delta = clock.getDelta();
 	var speed = delta * PHYS_SPEED;
@@ -339,18 +400,18 @@ for (let index = 0; index < arrows.length; index++)
 				var globalVertex = localVertex.applyMatrix4(arrows[index].matrix);
 
 				// Subtract the position from the world coordinates to obtain a directional vector of the arrow.
-				var directionVector = globalVertex.sub( arrows[index].position );
+				var directionVector = globalVertex.sub(arrows[index].position);
 
 				// Create a new THREE.js Raycaster object, using the arrows position as the origin, and the normalized direcional vector for the direction.
-				var ray = new THREE.Raycaster( arrows[index].position, directionVector.clone().normalize() );
+				var ray = new THREE.Raycaster(arrows[index].position, directionVector.clone().normalize());
 
 				// Use the active cams position as an indecator for which player we are.
 				// Then pass the array of each players hit boxes (meshes) as arguments to the raycasters "intersectObjects" method.
 				// This will store a collection of data if there was, in-fact, a collision.
 				if(activeCam.position.z > 0) {
-					var collisionResults = ray.intersectObjects( player1HitBoxes );
+					var collisionResults = ray.intersectObjects(player1HitBoxes);
 				} else {
-					var collisionResults = ray.intersectObjects( player2HitBoxes );
+					var collisionResults = ray.intersectObjects(player2HitBoxes);
 				}
 				vertexIndex += 3;
 
@@ -360,106 +421,15 @@ for (let index = 0; index < arrows.length; index++)
 				// See @https://stemkoski.github.io/Three.js/Collision-Detection.html and @https://threejs.org/docs/index.html#api/en/core/Raycaster for more information.
 				if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) 
 				{
-					var arrowClone = arrows[0].clone();
+					let arrowClone = arrows[0].clone();
 
-					// Check the current player by camera position.
-					if(activeCam.position.z > 0)
-					{
-						var newValue2 = player1Health - PROJECTILE_DAMAGE;
-						var barWidth = (newValue2 / total) * 100;
-						var hitWidth = (PROJECTILE_DAMAGE / player1Health) * 100 + "%";
-					
-						$('.hit').css({width: hitWidth,});
-						$('.health-bar').data({value: newValue2,});
-						setTimeout(function(){
-							$('.hit').css({width: '0',});
-							$('.bar').css({width: barWidth + "%",});
-							}, 500);
-					
-						loader = new THREE.TextureLoader();
-						loader.load('textures/particle2.png', function( texture ){
-							var pMaterial = new THREE.PointsMaterial( {
-								color: 0xFF0000,
-								size: 2,
-								map: texture,
-								transparent: true
-							});
-						
-						for (var p = 0; p < particleCount; p++) {
-
-							var pX = getRandomArbitrary(arrowClone.position.x - 10, arrowClone.position.x + 10),
-								pY = getRandomArbitrary(arrowClone.position.y - 10, arrowClone.position.y + 10),
-								pZ = getRandomArbitrary(arrowClone.position.z - 10, arrowClone.position.z + 10),
-								particle = new THREE.Vector3(pX, pY, pZ);
-								particle.velocity = new THREE.Vector3(
-								0,				// x
-								-Math.random(),	// y
-								0);				// z
-
-							// add it to the geometry
-							particles.vertices.push(particle);
-						}
-							
-							particleSystem = new THREE.Points(
-							particles,
-							pMaterial);
-							particleSystem.sortParticles = true;
-							
-							particleSystem.name = "particleSys";
-							scene.add(particleSystem);
-						});
-					} else {
-						var newValue2 = player2Health - PROJECTILE_DAMAGE;
-						var barWidth = (newValue2 / total) * 100;
-						var hitWidth = (PROJECTILE_DAMAGE / player2Health) * 100 + "%";
-					
-						$('.hit2').css({width: hitWidth,});
-						$('.health-bar2').data({value: newValue2,});
-						setTimeout(function(){
-							$('.hit2').css({width: '0',});
-							$('.bar2').css({width: barWidth + "%",});
-							}, 500);
-
-					
-						loader = new THREE.TextureLoader();
-						loader.load('textures/particle2.png', function( texture ){
-							var pMaterial = new THREE.PointsMaterial( {
-								color: 0xFF0000,
-								size: 2,
-								map: texture,
-								transparent: true
-							});
-						
-						for (var p = 0; p < particleCount; p++) {
-
-							// create a particle with random
-							// position values, -250 -> 250
-							var pX = getRandomArbitrary(arrowClone.position.x - 10, arrowClone.position.x + 10),
-								pY = getRandomArbitrary(arrowClone.position.y - 10, arrowClone.position.y + 10),
-								pZ = getRandomArbitrary(arrowClone.position.z - 10, arrowClone.position.z + 10),
-								particle = new THREE.Vector3(pX, pY, pZ);
-								particle.velocity = new THREE.Vector3(
-								0,				// x
-								-Math.random(),	// y
-								0);				// z
-
-							// add it to the geometry
-							particles.vertices.push(particle);
-						}
-							
-							particleSystem = new THREE.Points(
-							particles,
-							pMaterial);
-							particleSystem.sortParticles = true;
-				
-							particleSystem.name = "particleSys";
-							scene.add(particleSystem);
-							
-						});
-					}
+					// Update the health of the player and spawn a particle system for blood-like effects.
+					doCollision(arrowClone);
 
 					// Switch to other player and camera
 					switchSides();
+					
+					// Remove the arrow from the array.
 					arrows.shift();
 				}
 			}
@@ -477,15 +447,130 @@ for (let index = 0; index < arrows.length; index++)
 	renderer.render(backgroundScene, cameraCube);
 	renderer.render(scene, activeCam); // Repaint
 
-	// Make the mouse aim the active player's bow
+	// Make the mouse aim the active player's bow.
 	aim();
 }
 
 /**
-* Update player health and spawn blood 
-* //TODO pushing code.
+* Update player health and spawn blood after a collision is detected.
+* @Author Clayton Nida
 */
+function doCollision(arrowClone) {
+	// Pull the current health values from the CSS.
+	var player1Health = $('.health-bar').data('value');
+	var player2Health = $('.health-bar2').data('value');
+	var total = $('.health-bar').data('total');
 
+	// Check the current player by camera position.
+	if(activeCam.position.z > 0) {
+		var newValue2 = player1Health - PROJECTILE_DAMAGE;
+		var barWidth = (newValue2 / total) * 100;
+		var hitWidth = (PROJECTILE_DAMAGE / player1Health) * 100 + "%";
+	
+		$('.hit').css({width: hitWidth,});
+		$('.health-bar').data({value: newValue2,});
+		setTimeout(function(){
+			$('.hit').css({width: '0',});
+			$('.bar').css({width: barWidth + "%",});
+			}, 500);
+	
+		loader = new THREE.TextureLoader();
+		loader.load('textures/particle2.png', function( texture ){
+			var pMaterial = new THREE.PointsMaterial( {
+				color: 0xFF0000,
+				size: 2,
+				map: texture,
+				transparent: true
+			});
+		
+		for (var p = 0; p < particleCount; p++) {
+
+			var pX = getRandomArbitrary(arrowClone.position.x - 10, arrowClone.position.x + 10),
+				pY = getRandomArbitrary(arrowClone.position.y - 10, arrowClone.position.y + 10),
+				pZ = getRandomArbitrary(arrowClone.position.z - 10, arrowClone.position.z + 10),
+				particle = new THREE.Vector3(pX, pY, pZ);
+				particle.velocity = new THREE.Vector3(
+				0,				// x
+				-Math.random(),	// y
+				0);				// z
+
+			// add it to the geometry
+			particles.vertices.push(particle);
+		}
+			
+			particleSystem = new THREE.Points(
+			particles,
+			pMaterial);
+			particleSystem.sortParticles = true;
+			
+			particleSystem.name = "particleSys";
+			scene.add(particleSystem);
+		});
+	} else {
+		var newValue2 = player2Health - PROJECTILE_DAMAGE;
+		var barWidth = (newValue2 / total) * 100;
+		var hitWidth = (PROJECTILE_DAMAGE / player2Health) * 100 + "%";
+	
+		$('.hit2').css({width: hitWidth,});
+		$('.health-bar2').data({value: newValue2,});
+		setTimeout(function(){
+			$('.hit2').css({width: '0',});
+			$('.bar2').css({width: barWidth + "%",});
+			}, 500);
+
+	
+		loader = new THREE.TextureLoader();
+		loader.load('textures/particle2.png', function( texture ){
+			var pMaterial = new THREE.PointsMaterial( {
+				color: 0xFF0000,
+				size: 2,
+				map: texture,
+				transparent: true
+			});
+		
+		for (var p = 0; p < particleCount; p++) {
+
+			// create a particle with random
+			// position values, -250 -> 250
+			var pX = getRandomArbitrary(arrowClone.position.x - 10, arrowClone.position.x + 10),
+				pY = getRandomArbitrary(arrowClone.position.y - 10, arrowClone.position.y + 10),
+				pZ = getRandomArbitrary(arrowClone.position.z - 10, arrowClone.position.z + 10),
+				particle = new THREE.Vector3(pX, pY, pZ);
+				particle.velocity = new THREE.Vector3(
+				0,				// x
+				-Math.random(),	// y
+				0);				// z
+
+			// add it to the geometry
+			particles.vertices.push(particle);
+		}
+			
+			particleSystem = new THREE.Points(
+			particles,
+			pMaterial);
+			particleSystem.sortParticles = true;
+
+			particleSystem.name = "particleSys";
+			scene.add(particleSystem);
+			
+		});
+	}
+
+	// Check if either players health has dropped to 1 or less.
+	if(player1Health <= 1 || player2Health <= 1) {
+		// A string stores the winning player based on which player ended with more health.
+		let winner = player1Health > player2Health ? "Player 1" : "Player 2";
+
+		// Stop animation and restart the game.
+		runAnim = false;
+		$(renderer.domElement).fadeOut();
+		$('#intro').fadeIn();
+		$('#intro').html(winner +' wins! Click to restart...');
+		$('#intro').one('click', function() {
+			location = location;
+		});
+	}
+}
 
 /**
  * Switch the active player and active camera
@@ -503,112 +588,6 @@ function switchSides() {
 	} else {
 		activePlayer = player1;
 	}
-}
-
-// Set up the objects in the world
-function setupScene() {
-
-	// Initialize the floor
-	var floorGeo = new THREE.CubeGeometry(mapW * UNIT_SIZE, 10, mapW * UNIT_SIZE);
-	floorGeo.computeVertexNormals();
-	floorGeo.computeFaceNormals();
-	
-	loader = new THREE.TextureLoader();
-	loader.load('/three.js-master/examples/textures/terrain/grasslight-big.jpg', function( texture ){
-		var floorMat = new THREE.MeshBasicMaterial( {
-			map: texture
-		});
-		var floor = new THREE.Mesh(floorGeo, floorMat);
-	scene.add(floor);
-	});
-	
-
-	var loader = new THREE.PLYLoader();
-				loader.load( 'models/wind.ply', function ( geometry ) {
-					geometry.computeVertexNormals();
-					
-					var material = new THREE.MeshStandardMaterial( { color: 0x4d2600, flatShading: true } );
-					var mesh = new THREE.Mesh( geometry, material );
-					
-					mesh.position.y = 75;
-					mesh.position.x = 100;
-					mesh.position.z = -900;
-					mesh.rotation.x = - Math.PI / 2;
-					
-					let angle = Math.atan2(wind.z,-wind.x);
-					mesh.rotation.z = angle;
-					mesh.rotation.z += (1.5708*2); 
-					mesh.scale.multiplyScalar( .1 );
-					mesh.castShadow = true;
-					mesh.receiveShadow = true;
-					
-					scene.add( mesh );
-				} );
-
-	var loader = new THREE.PLYLoader();
-				loader.load( 'models/wind.ply', function ( geometry ) {
-					geometry.computeVertexNormals();
-					var material = new THREE.MeshStandardMaterial( { color: 0x4d2600, flatShading: true } );
-					var mesh2 = new THREE.Mesh( geometry, material );
-					mesh2.position.y = 75;
-					mesh2.position.x = -100;
-					mesh2.position.z = 900;
-					mesh2.rotation.x = - Math.PI / 2;
-					let angle = Math.atan2(wind.z,-wind.x);
-					mesh2.rotation.z = angle;
-					mesh2.rotation.z += (1.5708*2); 
-					mesh2.scale.multiplyScalar( .1 );
-					mesh2.castShadow = true;
-					mesh2.receiveShadow = true;
-					scene.add( mesh2 );
-				} );
-
-						
-	// Lighting
-	var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
-	directionalLight1.position.set( .5, .9, .5);
-	directionalLight1.castShadow = true;
-	scene.add( directionalLight1 );
-
-	var directionalLight2 = new THREE.DirectionalLight(0xF7EFBE, .5);
-	directionalLight2.position.set( -.5, .9, -.5);
-	directionalLight2.castShadow = true;
-	scene.add( directionalLight2 );
-
-	// Background
-
-	// Create your background scene
-	backgroundScene = new THREE.Scene();
-	backgroundCamera = new THREE.Camera();
-	cameraCube = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 100000 );
-
-	var r = "textures/skybox/";
-				var urls = [ r + "skybox_px.jpg", r + "skybox_nx.jpg",
-							 r + "skybox_py.jpg", r + "skybox_ny.jpg",
-							 r + "skybox_pz.jpg", r + "skybox_nz.jpg" ];
-	textureCube = new THREE.CubeTextureLoader().load( urls );
-	textureCube.format = THREE.RGBFormat;
-	textureCube.mapping = THREE.CubeReflectionMapping;
-	textureCube.encoding = THREE.sRGBEncoding;
-	var cubeShader = THREE.ShaderLib[ "cube" ];
-				var cubeMaterial = new THREE.ShaderMaterial( {
-					fragmentShader: cubeShader.fragmentShader,
-					vertexShader: cubeShader.vertexShader,
-					uniforms: cubeShader.uniforms,
-					depthWrite: false,
-					side: THREE.BackSide
-				} );
-				cubeMaterial.uniforms[ "tCube" ].value = textureCube;
-				Object.defineProperty( cubeMaterial, 'map', {
-					get: function () {
-						return this.uniforms.tCube.value;
-					}
-				} );
-				cubeMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 100, 100, 100 ), cubeMaterial );
-				
-				backgroundScene.add( cubeMesh );
-	// Add the background to the scene.
-	backgroundScene.add(cameraCube);
 }
 
 function initPlayers() {
@@ -664,20 +643,24 @@ function initPlayers() {
 	// Set player one as the first player to move and shoot
 	activePlayer = player1;
 }
-
-function distance(x1, y1, x2, y2) { 
-	return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)); 
+/**
+* Simple function to create a new vector using random values between -2PI and 2PI.
+* @Author Clayton Nida
+*/
+function initWind() {
+	wind = new THREE.Vector3(getRandomArbitrary(-2*Math.PI, 2*Math.PI), 1, getRandomArbitrary(-2*Math.PI, 2*Math.PI));
 }
 
-function getMapSector(v) {
-	var x = Math.floor((v.x + UNIT_SIZE / 2) / UNIT_SIZE + mapW/2);
-	var z = Math.floor((v.z + UNIT_SIZE / 2) / UNIT_SIZE + mapW/2);
-	return {x: x, z: z};
-}
-
-function checkWallCollision(v) {
-	var c = getMapSector(v);
-	return map[c.x][c.z] > 0;
+function initPhysics() {
+	// Physics configuration
+	collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+	
+	dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+	broadphase = new Ammo.btDbvtBroadphase();
+	solver = new Ammo.btSequentialImpulseConstraintSolver();
+	
+	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
+	physicsWorld.setGravity( new Ammo.btVector3( 0, -GRAVITY/50, 0) );
 }
 
 function onDocumentMouseDown(e) {
@@ -768,7 +751,7 @@ function onDocumentMouseUp(e) {
 	// Creates a ball and throws it
 	var ballMass = 1;
 	var ballRadius = 2;
-	var loader = new THREE.PLYLoader();
+	loader = new THREE.PLYLoader();
 	loader.load( 'models/Arrow.ply', function ( geometry ) {
 		geometry.computeVertexNormals();
 		var material = new THREE.MeshStandardMaterial( { color: 0x130d06, flatShading: true } );
@@ -822,23 +805,16 @@ $(window).resize(function()
 	
 	ASPECT_RATIO = WIDTH / HEIGHT;
 	
-	if (cam1) {
-		cam1.aspect = ASPECT_RATIO;
-		cam1.updateProjectionMatrix();
+	if (activeCam) {
+		activeCam.aspect = ASPECT_RATIO;
+		activeCam.updateProjectionMatrix();
 	}
 
 	if (renderer) {
 		renderer.setSize(WIDTH, HEIGHT);
 	}
-	
-	$('#intro, #hurt').css({width: WIDTH, height: HEIGHT,});
 });
 	
-function removeDebris(object) {
-	scene.remove( object );
-	physicsWorld.removeRigidBody( object.userData.physicsBody );
-}
-
 function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel ) 
 {
 	if (pos) {
@@ -891,18 +867,6 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 	return body;
 }
 
-function initPhysics() {
-	// Physics configuration
-	collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-	
-	dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
-	broadphase = new Ammo.btDbvtBroadphase();
-	solver = new Ammo.btSequentialImpulseConstraintSolver();
-	
-	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-	physicsWorld.setGravity( new Ammo.btVector3( 0, -GRAVITY/50, 0) );
-}
-
 function updatePhysics( deltaTime ) 
 {
 	// Step world
@@ -935,19 +899,6 @@ function updatePhysics( deltaTime )
 			}	
 		}
 	}
-}
-
-function initWind() {
-	wind = new THREE.Vector3(getRandomArbitrary(-2*Math.PI, 2*Math.PI), 1, getRandomArbitrary(-2*Math.PI, 2*Math.PI));
-}
-
-function createRandomColor() {
-	return Math.floor( Math.random() * ( 1 << 24 ) );
-}
-
-function createMaterial( color ) {
-	color = color || createRandomColor();
-	return new THREE.MeshPhongMaterial( { color: color } );
 }
 
 function getRandomArbitrary(min, max) {
