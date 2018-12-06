@@ -321,7 +321,7 @@ for (let index = 0; index < arrows.length; index++)
 
 			scene.remove(thisArrow);
 			arrows.shift();
-			
+
 			// Once the arrow is destroyed, switch players and break the loop.
 			switchSides();
 			break;
@@ -479,8 +479,6 @@ for (let index = 0; index < arrows.length; index++)
 
 	// Make the mouse aim the active player's bow
 	aim();
-
-	time += delta;
 }
 
 /**
