@@ -40,7 +40,7 @@
 
 <script>
 
-// Initalize the map where '1' represents a "wall".
+// Initalize the map where '1' represents the end of clipspace.
 var map = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1,],
 		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
 		  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1,], 
@@ -54,12 +54,12 @@ var map = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1,],
 var mapW = map.length;
 var mapH = map[0].length;
 
-// Semi-constants
+// Game Constants
 var WIDTH = window.innerWidth;
 var HEIGHT = window.innerHeight;
 var ASPECT_RATIO = WIDTH / HEIGHT;
 var UNIT_SIZE = 250;
-var BULLET_SPEED = 500;
+var PHYS_SPEED = 500;
 var PROJECTILE_DAMAGE = 333.3;
 var ARROW_SPEED = 1;
 var GRAVITY = 9.81;
@@ -68,14 +68,10 @@ var GRAVITY = 9.81;
 var scene, backgroundScene, backgroundCamera, renderer, controls, clock, projector, model, skin;
 var runAnim = true;
 var mouseCoords = new THREE.Vector2();
-var container, stats;
-var textureLoader;
 var raycaster = new THREE.Raycaster();
-var ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } );
 var loader = new THREE.PLYLoader();
 var mousedownID = -1;
 var pow = .1;
-var testArrow;
 var particleCount = 800,
     particles = new THREE.Geometry(),
     pMaterial = new THREE.PointsMaterial({
@@ -88,12 +84,11 @@ var particleSystem;
 var players = [];
 var player1HitBoxes = [];
 var player2HitBoxes = [];
-
 var activePlayer;
-
 var player1;
 var player2;
 
+// Cameras
 var cam1;
 var cam2;
 var activeCam;
@@ -107,22 +102,11 @@ var physicsWorld;
 var margin = 0.05;
 var wind;
 
-var rigidBodies = [];
+//  Variables used for arrows
+var arrows = [];
 var pos = new THREE.Vector3();
 var quat = new THREE.Quaternion();
 var transformAux1 = new Ammo.btTransform();
-var tempBtVec3_1 = new Ammo.btVector3( 0, 0, 0 );
-var time = 0;
-
-var objectsToRemove = [];
-for ( var i = 0; i < 500; i++ ) 
-{
-	objectsToRemove[ i ] = null;
-}
-var numObjectsToRemove = 0;
-
-var impactPoint = new THREE.Vector3();
-var impactNormal = new THREE.Vector3();
 
 // Initialize and run on document ready
 $(document).ready(function() 
@@ -241,13 +225,16 @@ function update()
 // Update and display
 function render() 
 {
+	// Pull the current health values from the CSS
 	var player1Health = $('.health-bar').data('value');
 	var player2Health = $('.health-bar2').data('value');
 	var total = $('.health-bar').data('total');
-	
+	// Check if either players health has dropped to 1 or less.
 	if(player1Health <= 1 || player2Health <= 1)
 	{
+		// A string is stored of the winning player based on which player ended with more health.
 		let winner = player1Health > player2Health ? "Player 1" : "Player 2";
+		// Stop animation and restart the game.
 		runAnim = false;
 		$(renderer.domElement).fadeOut();
 		$('#intro').fadeIn();
@@ -256,45 +243,106 @@ function render()
 			location = location;
 		});
 	}
+	// Set a time and physics step speed based on THREE.js Clock.
 	var delta = clock.getDelta();
-	var speed = delta * BULLET_SPEED;
+	var speed = delta * PHYS_SPEED;
 
-	updatePhysics( speed );
+	updatePhysics(speed);
+	detectCollision();
+	
+	cameraCube.rotation.y += wind.x * 0.0001;
+	cameraCube.rotation.z = ( activeCam.rotation.z );
+	cameraCube.rotation.x = ( activeCam.rotation.x );
+	
+	renderer.autoClear = false;
+	renderer.gammaOutput = true;
 
-	for (let index = 0; index < rigidBodies.length; index++) 
+	renderer.clear();
+	renderer.render(backgroundScene, cameraCube);
+	renderer.render(scene, activeCam); // Repaint
+
+	aim();
+}
+
+/**
+ * Make the active player change look in a direction with respect to the mouse.
+ * @author Chandler Davis
+ */
+function aim() {
+	raycaster.setFromCamera( mouseCoords, activeCam);
+
+	var dir = raycaster.ray.direction;
+	var axis = new THREE.Vector3();
+
+	// Set the axis depending on which player is active
+	if(activePlayer == player1) {
+		axis.set(dir.z, 0, -dir.x).normalize();
+	} else {
+		axis.set(-dir.z, 0, dir.x).normalize();
+	}
+	
+	// Set the aim cube's quaternion's direction - avoiding 1 and -1
+	if(activePlayer.bow) {
+		if ( dir.y > 0.99999 ) {
+			activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
+		} else if ( dir.y < -0.99999 ) {
+			activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
+		} else {
+			activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+		}
+	}
+}
+
+/**
+* Detect collision beteween an arrow and a player.
+* @Author Clayton Nida
+*/
+function detectCollision() {
+// Loop through our arrows and check if the arrow is still visible, if not, remove it.
+for (let index = 0; index < arrows.length; index++) 
 	{
-		let thisArrow = rigidBodies[index];
+		let thisArrow = arrows[index];
 		if(thisArrow.position.x > 2000 || thisArrow.position.x < -2000 
 		|| thisArrow.position.z > 2000 || thisArrow.position.z < -2000 
 		|| thisArrow.position.y < 10) {
 
-			switchSides();
-
 			scene.remove(thisArrow);
-			rigidBodies.shift();
+			arrows.shift();
+			// Once the arrow is destroyed, switch players and break the loop.
+			switchSides();
 			break;
 		}
-		if(rigidBodies[index])
+		// Collision Detection.
+		if(arrows[index])
 		{
-			for (var vertexIndex = 0; vertexIndex < rigidBodies[index].geometry.attributes.position.array.length/3; vertexIndex++)
+			// Loop through arrows, and grab each of its vertices.
+			for (var vertexIndex = 0; vertexIndex < arrows[index].geometry.attributes.position.array.length/3; vertexIndex++)
 			{       
-				var localVertex = new THREE.Vector3(rigidBodies[index].geometry.attributes.position.array[vertexIndex *3],rigidBodies[index].geometry.attributes.position.array[vertexIndex*3+1],rigidBodies[index].geometry.attributes.position.array[vertexIndex*3+2]);
-				var globalVertex = localVertex.applyMatrix4(rigidBodies[index].matrix);
-				var directionVector = globalVertex.sub( rigidBodies[index].position );
-
-				var ray = new THREE.Raycaster( rigidBodies[index].position, directionVector.clone().normalize() );
+				// Create a new vector containing the vertex's local coordinates.
+				var localVertex = new THREE.Vector3(arrows[index].geometry.attributes.position.array[vertexIndex *3],arrows[index].geometry.attributes.position.array[vertexIndex*3+1],arrows[index].geometry.attributes.position.array[vertexIndex*3+2]);
+				// Convert them to world coordinates.
+				var globalVertex = localVertex.applyMatrix4(arrows[index].matrix);
+				// Subtract the position from the world coordinates to obtain a directional vector of the arrow.
+				var directionVector = globalVertex.sub( arrows[index].position );
+				// Create a new THREE.js Raycaster object, using the arrows position as the origin, and the normalized direcional vector for the direction.
+				var ray = new THREE.Raycaster( arrows[index].position, directionVector.clone().normalize() );
+				// Use the active cams position as an indecator for which player we are.
+				// Then pass the array of each players hit boxes (meshes) as arguments to the raycasters "intersectObjects" method.
+				// This will store a collection of data if there was, in-fact, a collision.
 				if(activeCam.position.z > 0) {
 					var collisionResults = ray.intersectObjects( player1HitBoxes );
 				} else {
 					var collisionResults = ray.intersectObjects( player2HitBoxes );
 				}
-				
 				vertexIndex += 3;
-			
-				if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) 
+				// Check that our collisionResults contains data, if so, pull the distance value of the data (this is the distance of the origin of the ray
+				// and the intersection) and compare it to the length of the directional vector, if it is less, then proceed.
+				// this is done to check that ray from the arrow's origin are intersection the cube. 
+				// See @https://stemkoski.github.io/Three.js/Collision-Detection.html and @https://threejs.org/docs/index.html#api/en/core/Raycaster for more information.
+				if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) 
 				{
-					var arrowClone = rigidBodies[0].clone();
-					
+					var arrowClone = arrows[0].clone();
+					// Check the current player by camera position.
 					if(activeCam.position.z > 0)
 					{
 						var newValue2 = player1Health - PROJECTILE_DAMAGE;
@@ -307,7 +355,6 @@ function render()
 							$('.hit').css({width: '0',});
 							$('.bar').css({width: barWidth + "%",});
 							}, 500);
-
 					
 						loader = new THREE.TextureLoader();
 						loader.load('textures/particle2.png', function( texture ){
@@ -315,15 +362,11 @@ function render()
 								color: 0xFF0000,
 								size: 2,
 								map: texture,
-								//blending: THREE.AdditiveBlending,
 								transparent: true
 							});
 						
 						for (var p = 0; p < particleCount; p++) {
 
-							// create a particle with random
-							// position values, -250 -> 250
-							
 							var pX = getRandomArbitrary(arrowClone.position.x - 10, arrowClone.position.x + 10),
 								pY = getRandomArbitrary(arrowClone.position.y - 10, arrowClone.position.y + 10),
 								pZ = getRandomArbitrary(arrowClone.position.z - 10, arrowClone.position.z + 10),
@@ -343,12 +386,8 @@ function render()
 							
 							particleSystem.name = "particleSys";
 							scene.add(particleSystem);
-							
 						});
-						
-					}
-					else
-					{
+					} else {
 						var newValue2 = player2Health - PROJECTILE_DAMAGE;
 						var barWidth = (newValue2 / total) * 100;
 						var hitWidth = (PROJECTILE_DAMAGE / player2Health) * 100 + "%";
@@ -396,61 +435,19 @@ function render()
 							scene.add(particleSystem);
 							
 						});
-					
 					}
-
 					switchSides();
-					rigidBodies.shift();
+					arrows.shift();
 				}
 			}
-			
 		}
 	}
-	
-	cameraCube.rotation.y += wind.x * 0.0001;
-	cameraCube.rotation.z = ( activeCam.rotation.z );
-	cameraCube.rotation.x = ( activeCam.rotation.x );
-	
-	renderer.autoClear = false;
-	renderer.gammaOutput = true;
-
-	renderer.clear();
-	renderer.render(backgroundScene, cameraCube);
-	renderer.render(scene, activeCam); // Repaint
-
-	aim();
-
-	time += delta;
 }
-
 /**
- * Make the active player change look in a direction with respect to the mouse.
- * @author Chandler Davis
- */
-function aim() {
-	raycaster.setFromCamera( mouseCoords, activeCam);
+* Update player health and spawn blood 
+* //TODO pushing code.
+*/
 
-	var dir = raycaster.ray.direction;
-	var axis = new THREE.Vector3();
-
-	// Set the axis depending on which player is active
-	if(activePlayer == player1) {
-		axis.set(dir.z, 0, -dir.x).normalize();
-	} else {
-		axis.set(-dir.z, 0, dir.x).normalize();
-	}
-	
-	// Set the aim cube's quaternion's direction - avoiding 1 and -1
-	if(activePlayer.bow) {
-		if ( dir.y > 0.99999 ) {
-			activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
-		} else if ( dir.y < -0.99999 ) {
-			activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
-		} else {
-			activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-		}
-	}
-}
 
 /**
  * Switch the active player and active camera
@@ -832,7 +829,7 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 	scene.add( object );
 	
 	if ( mass > 0 ) {
-		rigidBodies.push( object );
+		arrows.push( object );
 		body.setActivationState( 4 ); // Disable deactivation
 	}
 	
@@ -859,8 +856,8 @@ function updatePhysics( deltaTime )
 	physicsWorld.stepSimulation( deltaTime, 10 );
 	
 	// Update rigid bodies
-	for ( var i = 0, il = rigidBodies.length; i < il; i++ ) {
-		var objThree = rigidBodies[ i ];
+	for ( var i = 0, il = arrows.length; i < il; i++ ) {
+		var objThree = arrows[ i ];
 		var objPhys = objThree.userData.physicsBody;
 		
 		var ms = objPhys.getMotionState();
