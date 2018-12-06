@@ -252,6 +252,7 @@ var cubeShader = THREE.ShaderLib[ "cube" ];
 			cubeMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 100, 100, 100 ), cubeMaterial );
 			
 			backgroundScene.add( cubeMesh );
+
 // Add the background to the scene.
 backgroundScene.add(cameraCube);
 }
@@ -590,6 +591,10 @@ function switchSides() {
 	}
 }
 
+/**
+ * Initialize the player objects
+ * @author Chandler Davis, Clayton Nida
+ */
 function initPlayers() {
 
 	// Initialize player one's bow object
@@ -643,6 +648,7 @@ function initPlayers() {
 	// Set player one as the first player to move and shoot
 	activePlayer = player1;
 }
+
 /**
 * Simple function to create a new vector using random values between -2PI and 2PI.
 * @Author Clayton Nida
