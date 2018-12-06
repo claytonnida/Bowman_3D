@@ -36,5 +36,7 @@ The animation looks the way it does by making the right hand go move towards the
 
 Once the mouse is released, I call a function that resets the positions and rotations of the dummy objects back to their initial positions.
 
+## README
+I wrote the README file too! 
 
 
