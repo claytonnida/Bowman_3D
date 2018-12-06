@@ -1,39 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>CS336 Final Project - 3D Bowman Game
-	</title>
+	<title>CS336 Final Project - 3D Bowman Game</title>
 
 	<link rel="stylesheet" type="text/css" href="index_style.css">
 	
 	<script src="jquery-1.7.2.min.js"></script>
-
 	<script src="three.js-master/build/three.js"></script>
-
-	<script src="three.js-master/examples/js/renderers/Projector.js"></script>
 	<script src="three.js-master/examples/js/libs/ammo.js"></script>
-	<script src="three.js-master/examples/js/libs/stats.min.js"></script>
-	<script src="three.js-master/examples/js/controls/OrbitControls.js"></script>
 	<script src="three.js-master/examples/js/WebGL.js"></script>
-	<script src="three.js-master/examples/js/ConvexObjectBreaker.js"></script>
-	<script src="three.js-master/examples/js/QuickHull.js"></script>
-	<script src="three.js-master/examples/js/geometries/ConvexGeometry.js"></script>
 	<script src="three.js-master/examples/js/loaders/PLYLoader.js"></script>
-	<script src="three.js-master/examples/js/geometries/hilbert3D.js"></script>
-	<script src='three.js-master/examples/js/lines/LineSegmentsGeometry.js'></script>
-	<script src='three.js-master/examples/js/lines/LineGeometry.js'></script>
-	<script src='three.js-master/examples/js/lines/WireframeGeometry2.js'></script>
-
-	<script src='three.js-master/examples/js/lines/LineMaterial.js'></script>
-
-	<script src='three.js-master/examples/js/lines/LineSegments2.js'></script>
-	<script src='three.js-master/examples/js/lines/Line2.js'></script>
-	<script src='three.js-master/examples/js/lines/Wireframe.js'></script>
-	
 	<script src="three.js-master/src/loaders/TextureLoader.js"></script>
-
 	<script src="Player.js"></script>
-	<script src="three.js-master/examples/js/GPUParticleSystem.js"></script>
 </head>
 
 <body>
@@ -332,31 +310,32 @@ function initCameras() {
 }
 
 /**
-* A function to move the particles in our particle system.
+* Simple function to create a new vector using random values between -2PI and 2PI.
 * @Author Clayton Nida
 */
-function updateParticles() {
-	// Check that particles exist.
-	if(particles.vertices.length > 0) {
+function initWind() {
+	wind = new THREE.Vector3(getRandomArbitrary(-2*Math.PI, 2*Math.PI), 1, getRandomArbitrary(-2*Math.PI, 2*Math.PI));
+}
 
-		// Loop through our particles and update the posistions with random values within a close range.
-		// This is done to keep the particles close, giving the look that the blood came from a certain location. 
-		for (let i = 0; i < particleCount; i++) {
-			var particle = particles.vertices[i];
-			particle.x = getRandomArbitrary(particle.x - 1, particle.x + 1);
-			particle.y = getRandomArbitrary(particle.y - .7, particle.y);
-			particle.z = getRandomArbitrary(particle.z - 1, particle.z + 1);
-		}
+function initPhysics() {
+	// Physics configuration
+	collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+	
+	dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+	broadphase = new Ammo.btDbvtBroadphase();
+	solver = new Ammo.btSequentialImpulseConstraintSolver();
+	
+	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
+	physicsWorld.setGravity( new Ammo.btVector3( 0, -GRAVITY/50, 0) );
+}
 
-		// Flag the particles for an update.
-		particles.verticesNeedUpdate = true;
-
-		// Check to see if the blood fell beneath the map, if so, remove the system and clear the array.
-		if(particles.vertices[0].y < -50) {
-			particles = new THREE.Geometry();
-			scene.remove(scene.getObjectByName("particleSys"));
-		}
+// Animation.
+function animate() {
+	if (runAnim) {	
+		requestAnimationFrame(animate); 
+		updateParticles();
 	}
+	render();
 }
 
 // Update and display.
@@ -385,30 +364,63 @@ function render()
 }
 
 /**
- * Make the active player change look in a direction with respect to the mouse.
- * @author Chandler Davis
- */
-function aim() {
-	raycaster.setFromCamera( mouseCoords, activeCam);
+* A function to move the particles in our particle system.
+* @Author Clayton Nida
+*/
+function updateParticles() {
+	// Check that particles exist.
+	if(particles.vertices.length > 0) {
 
-	var dir = raycaster.ray.direction;
-	var axis = new THREE.Vector3();
+		// Loop through our particles and update the posistions with random values within a close range.
+		// This is done to keep the particles close, giving the look that the blood came from a certain location. 
+		for (let i = 0; i < particleCount; i++) {
+			var particle = particles.vertices[i];
+			particle.x = getRandomArbitrary(particle.x - 1, particle.x + 1);
+			particle.y = getRandomArbitrary(particle.y - .7, particle.y);
+			particle.z = getRandomArbitrary(particle.z - 1, particle.z + 1);
+		}
 
-	// Set the axis depending on which player is active
-	if(activePlayer == player1) {
-		axis.set(dir.z, 0, -dir.x).normalize();
-	} else {
-		axis.set(-dir.z, 0, dir.x).normalize();
+		// Flag the particles for an update.
+		particles.verticesNeedUpdate = true;
+
+		// Check to see if the blood fell beneath the map, if so, remove the system and clear the array.
+		if(particles.vertices[0].y < -50) {
+			particles = new THREE.Geometry();
+			scene.remove(scene.getObjectByName("particleSys"));
+		}
 	}
+}
+
+function updatePhysics( deltaTime ) 
+{
+	// Step world
+	physicsWorld.stepSimulation( deltaTime, 10 );
 	
-	// Set the aim cube's quaternion's direction - avoiding 1 and -1
-	if(activePlayer.bow) {
-		if ( dir.y > 0.99999 ) {
-			activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
-		} else if ( dir.y < -0.99999 ) {
-			activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
-		} else {
-			activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+	// Update rigid bodies
+	for ( var i = 0, il = arrows.length; i < il; i++ ) {
+		var objThree = arrows[ i ];
+		var objPhys = objThree.userData.physicsBody;
+		
+		var ms = objPhys.getMotionState();
+		
+		if ( ms ) {
+			ms.getWorldTransform( transformAux1 );
+			
+			var p = transformAux1.getOrigin();
+			var q = transformAux1.getRotation();
+			
+			objThree.position.set(p.x(), p.y(), p.z());
+
+			if(activeCam.position.z < 0)
+			{
+				objThree.rotation.y = (4.7124);
+				objThree.userData.collided = false;
+			}
+			else
+			{
+				objThree.rotation.y = (-4.7124);
+				objThree.userData.collided = false;
+			}	
 		}
 	}
 }
@@ -605,6 +617,35 @@ function doCollision(arrowClone) {
 }
 
 /**
+ * Make the active player change look in a direction with respect to the mouse.
+ * @author Chandler Davis
+ */
+ function aim() {
+	raycaster.setFromCamera( mouseCoords, activeCam);
+
+	var dir = raycaster.ray.direction;
+	var axis = new THREE.Vector3();
+
+	// Set the axis depending on which player is active
+	if(activePlayer == player1) {
+		axis.set(dir.z, 0, -dir.x).normalize();
+	} else {
+		axis.set(-dir.z, 0, dir.x).normalize();
+	}
+	
+	// Set the aim cube's quaternion's direction - avoiding 1 and -1
+	if(activePlayer.bow) {
+		if ( dir.y > 0.99999 ) {
+			activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
+		} else if ( dir.y < -0.99999 ) {
+			activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
+		} else {
+			activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+		}
+	}
+}
+
+/**
  * Switch the active player and active camera
  * @author Chandler Davis
  */
@@ -620,35 +661,6 @@ function switchSides() {
 	} else {
 		activePlayer = player1;
 	}
-}
-
-/**
-* Simple function to create a new vector using random values between -2PI and 2PI.
-* @Author Clayton Nida
-*/
-function initWind() {
-	wind = new THREE.Vector3(getRandomArbitrary(-2*Math.PI, 2*Math.PI), 1, getRandomArbitrary(-2*Math.PI, 2*Math.PI));
-}
-
-function initPhysics() {
-	// Physics configuration
-	collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-	
-	dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
-	broadphase = new Ammo.btDbvtBroadphase();
-	solver = new Ammo.btSequentialImpulseConstraintSolver();
-	
-	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-	physicsWorld.setGravity( new Ammo.btVector3( 0, -GRAVITY/50, 0) );
-}
-
-// Animation.
-function animate() {
-	if (runAnim) {	
-		requestAnimationFrame(animate); 
-		updateParticles();
-	}
-	render();
 }
 
 function onDocumentMouseMove(e) {
@@ -784,24 +796,6 @@ function resetPullBack() {
 	activePlayer.rightElbow.rotation.set(0, 0, 0);
 	activePlayer.leftShoulderDummy.rotation.set(0, 0, -.6);
 }
-
-// Handle window resizing
-$(window).resize(function() 
-{
-	WIDTH = window.innerWidth;
-	HEIGHT = window.innerHeight;
-	
-	ASPECT_RATIO = WIDTH / HEIGHT;
-	
-	if (activeCam) {
-		activeCam.aspect = ASPECT_RATIO;
-		activeCam.updateProjectionMatrix();
-	}
-
-	if (renderer) {
-		renderer.setSize(WIDTH, HEIGHT);
-	}
-});
 	
 function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel ) 
 {
@@ -855,43 +849,27 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 	return body;
 }
 
-function updatePhysics( deltaTime ) 
-{
-	// Step world
-	physicsWorld.stepSimulation( deltaTime, 10 );
-	
-	// Update rigid bodies
-	for ( var i = 0, il = arrows.length; i < il; i++ ) {
-		var objThree = arrows[ i ];
-		var objPhys = objThree.userData.physicsBody;
-		
-		var ms = objPhys.getMotionState();
-		
-		if ( ms ) {
-			ms.getWorldTransform( transformAux1 );
-			
-			var p = transformAux1.getOrigin();
-			var q = transformAux1.getRotation();
-			
-			objThree.position.set(p.x(), p.y(), p.z());
-
-			if(activeCam.position.z < 0)
-			{
-				objThree.rotation.y = (4.7124);
-				objThree.userData.collided = false;
-			}
-			else
-			{
-				objThree.rotation.y = (-4.7124);
-				objThree.userData.collided = false;
-			}	
-		}
-	}
-}
-
 function getRandomArbitrary(min, max) {
 	return Math.random() * (max - min) + min;
 }
+
+// Handle window resizing
+$(window).resize(function() 
+{
+	WIDTH = window.innerWidth;
+	HEIGHT = window.innerHeight;
+	
+	ASPECT_RATIO = WIDTH / HEIGHT;
+	
+	if (activeCam) {
+		activeCam.aspect = ASPECT_RATIO;
+		activeCam.updateProjectionMatrix();
+	}
+
+	if (renderer) {
+		renderer.setSize(WIDTH, HEIGHT);
+	}
+});
 
 </script>
 </html>
