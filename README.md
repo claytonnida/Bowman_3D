@@ -2,7 +2,7 @@
 
 ## What is this? 
 
-This is a sort of "game" that Clayton Nida and Chandler Davis created as a final project for Com S 336 at Iowa State University, which is an Introduction to 3D Computer Graphics course. 
+This is a sort of "game" that [Clayton Nida](https://github.com/claytonnida "Clayton's Github Page") and [Chandler Davis](https://github.com/ChanFDavis "Chandler's Github Page") created as a final project for Com S 336 at Iowa State University, which is an Introduction to 3D Computer Graphics course. 
 
 In this game, you have two players that take turns to shoot arrows at each other with a bow. To do this, you must aim with the mouse, hold down the left mouse button to charge your shot, and release the mouse button to let the arrow fly. 
 
