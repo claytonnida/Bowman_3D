@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>CS336 Final Project - 3D Bowman Game</title>
+   <title>CS336 Final Project - 3D Bowman Game</title>
 
-	<link rel="stylesheet" type="text/css" href="index_style.css">
-	
-	<script src="jquery-1.7.2.min.js"></script>
-	<script src="three.js-master/build/three.js"></script>
-	<script src="three.js-master/examples/js/libs/ammo.js"></script>
-	<script src="three.js-master/examples/js/WebGL.js"></script>
-	<script src="three.js-master/examples/js/loaders/PLYLoader.js"></script>
-	<script src="three.js-master/src/loaders/TextureLoader.js"></script>
-	<script src="Player.js"></script>
+   <link rel="stylesheet" type="text/css" href="index_style.css">
+   
+   <script src="jquery-1.7.2.min.js"></script>
+   <script src="three.js-master/build/three.js"></script>
+   <script src="three.js-master/examples/js/libs/ammo.js"></script>
+   <script src="three.js-master/examples/js/WebGL.js"></script>
+   <script src="three.js-master/examples/js/loaders/PLYLoader.js"></script>
+   <script src="three.js-master/src/loaders/TextureLoader.js"></script>
+   <script src="Player.js"></script>
 </head>
 
 <body>
 </body>
 
 <script>
+   
 // Game Constants.
 var WIDTH = window.innerWidth;
 var HEIGHT = window.innerHeight;
@@ -31,17 +32,20 @@ var GRAVITY = 9.81;
 // Global Variables.
 var scene, backgroundScene, renderer, clock;
 var runAnim = true;
+
 var mouseCoords = new THREE.Vector2();
 var raycaster = new THREE.Raycaster();
 var loader = new THREE.PLYLoader();
+
 var mousedownID = -1;
 var pow = .1;
-var particleCount = 800,
-    particles = new THREE.Geometry(),
-    pMaterial = new THREE.PointsMaterial({
+
+var particleCount = 800;
+var particles = new THREE.Geometry();
+var Material = new THREE.PointsMaterial({
       color: 0xFFFFFF,
       size: 10
-	});
+   });
 var particleSystem;
 
 // Holds the Player objects for our game.
@@ -82,13 +86,13 @@ var transformAux1 = new Ammo.btTransform();
 
 // Initialize and run on document ready
 $(document).ready(function() {
-	$('body').append('<div id="intro">Click to start</div>');
-	$('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) {
-		e.preventDefault();
-		$(this).fadeOut();
-		init();
-		animate();
-	});
+   $('body').append('<div id="intro">Click to start</div>');
+   $('#intro').css({width: WIDTH, height: HEIGHT}).one('click', function(e) {
+      e.preventDefault();
+      $(this).fadeOut();
+      init();
+      animate();
+   });
 });
 
 /**
@@ -96,42 +100,42 @@ $(document).ready(function() {
 * @Author Clayton Nida
 */
 function init() {
-	clock = new THREE.Clock();
-	scene = new THREE.Scene();
+   clock = new THREE.Clock();
+   scene = new THREE.Scene();
 
-	setupScene();
-	initCameras();
-	initPlayers();
-	initWind();
-	initPhysics();
-	
-	renderer = new THREE.WebGLRenderer();
-	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-	renderer.setSize(WIDTH, HEIGHT);
-	
-	var spotLight = new THREE.SpotLight( 0xF7EFBE );
-	spotLight.position.set( 0, 1000, 0 );
-	spotLight.castShadow = true;
-	spotLight.shadow.mapSize.width = 10 * FLOOR_UNIT_SIZE, 10, 10 * FLOOR_UNIT_SIZE;
-	spotLight.shadow.mapSize.height = 10 * FLOOR_UNIT_SIZE, 10, 10 * FLOOR_UNIT_SIZE;
-	spotLight.shadow.camera.near = 1;
-	spotLight.shadow.camera.far = 10000;
-	spotLight.shadow.camera.fov = 60;
+   setupScene();
+   initCameras();
+   initPlayers();
+   initWind();
+   initPhysics();
+   
+   renderer = new THREE.WebGLRenderer();
+   renderer.shadowMap.enabled = true;
+   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+   renderer.setSize(WIDTH, HEIGHT);
+   
+   var spotLight = new THREE.SpotLight( 0xF7EFBE );
+   spotLight.position.set( 0, 1000, 0 );
+   spotLight.castShadow = true;
+   spotLight.shadow.mapSize.width = 10 * FLOOR_UNIT_SIZE, 10, 10 * FLOOR_UNIT_SIZE;
+   spotLight.shadow.mapSize.height = 10 * FLOOR_UNIT_SIZE, 10, 10 * FLOOR_UNIT_SIZE;
+   spotLight.shadow.camera.near = 1;
+   spotLight.shadow.camera.far = 10000;
+   spotLight.shadow.camera.fov = 60;
 
-	scene.add(spotLight);
-	
-	document.body.appendChild(renderer.domElement);
-	
-	// Track mouse position.
-	document.addEventListener('mousedown', onDocumentMouseDown, false);
-	document.addEventListener('mouseup', onDocumentMouseUp, false);
-	document.addEventListener('mousemove', onDocumentMouseMove, false);
-	
-	// Display player health and power bar.
-	$('body').append('<div id="p1" class="health-bar" data-total="1000" data-value="1000"><div class="bar"><div class="hit"></div></div></div>');
-	$('body').append('<div id="p2" class="health-bar2" data-total="1000" data-value="1000"><div class="bar2"><div class="hit2"></div></div></div>');
-	$('body').append('<div class="power-bar" data-total="1000" data-value="0"><div class="power"></div></div>');
+   scene.add(spotLight);
+   
+   document.body.appendChild(renderer.domElement);
+   
+   // Track mouse position.
+   document.addEventListener('mousedown', onDocumentMouseDown, false);
+   document.addEventListener('mouseup', onDocumentMouseUp, false);
+   document.addEventListener('mousemove', onDocumentMouseMove, false);
+   
+   // Display player health and power bar.
+   $('body').append('<div id="p1" class="health-bar" data-total="1000" data-value="1000"><div class="bar"><div class="hit"></div></div></div>');
+   $('body').append('<div id="p2" class="health-bar2" data-total="1000" data-value="1000"><div class="bar2"><div class="hit2"></div></div></div>');
+   $('body').append('<div class="power-bar" data-total="1000" data-value="0"><div class="power"></div></div>');
 }
 
 /**
@@ -139,113 +143,118 @@ function init() {
 * @Author Clayton Nida
 */
 function setupScene() {
-// Create the floor.
-var floorGeo = new THREE.CubeGeometry(10 * FLOOR_UNIT_SIZE, 10, 10 * FLOOR_UNIT_SIZE);
-floorGeo.computeVertexNormals();
-floorGeo.computeFaceNormals();
-
-// Load the floor with the THREE.js grass texture.
-loader = new THREE.TextureLoader();
-loader.load('/three.js-master/examples/textures/terrain/grasslight-big.jpg', function( texture ){
-	var floorMat = new THREE.MeshBasicMaterial( {
-		map: texture
-	});
-	var floor = new THREE.Mesh(floorGeo, floorMat);
-scene.add(floor);
-});
-
-// Load both weather vanes into the game. These will point in the direction of the wind.
-loader = new THREE.PLYLoader();
-loader.load( 'models/wind.ply', function (geometry) {
-	geometry.computeVertexNormals();
-	var material = new THREE.MeshStandardMaterial( { color: 0x4d2600, flatShading: true } );
-
-	// Rooster 1	
-	var rooster1 = new THREE.Mesh( geometry, material );
-	
-	// Set first rooster next to player 1.
-	rooster1.position.y = 75;
-	rooster1.position.x = 100;
-	rooster1.position.z = -900;
-	
-	// Find the angle between the x and z values of the wind. Then rotate the rooster by that angle.
-	let angle = Math.atan2(wind.z,-wind.x);
-	rooster1.rotation.x = - Math.PI / 2;
-	rooster1.rotation.z = angle;
-	rooster1.rotation.z += (1.5708*2); 
-	rooster1.scale.multiplyScalar(.1);
-	rooster1.castShadow = true;
-	rooster1.receiveShadow = true;
-	
-	scene.add(rooster1);
-
-	// Rooster 2
-	var rooster2 = new THREE.Mesh( geometry, material );
-
-	// Set first rooster next to player 2.
-	rooster2.position.y = 75;
-	rooster2.position.x = -100;
-	rooster2.position.z = 900;
-
-	// Find the angle between the x and z values of the wind. Then rotate the rooster by that angle.
-	angle = Math.atan2(wind.z,-wind.x);
-	rooster2.rotation.x = - Math.PI / 2;
-	rooster2.rotation.z = angle;
-	rooster2.rotation.z += (1.5708*2); 
-	rooster2.scale.multiplyScalar(.1);
-	rooster2.castShadow = true;
-	rooster2.receiveShadow = true;
-
-	scene.add(rooster2);
-} );
-					
-// Lighting
-var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
-directionalLight1.position.set(.5, .9, .5);
-directionalLight1.castShadow = true;
-scene.add(directionalLight1);
-
-var directionalLight2 = new THREE.DirectionalLight(0xF7EFBE, .5);
-directionalLight2.position.set(-.5, .9, -.5);
-directionalLight2.castShadow = true;
-scene.add(directionalLight2);
-
-// Background
-
-// To make the skybox, we create a new scene/camera for the background.
-backgroundScene = new THREE.Scene();
-cameraCube = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 100000 );
-
-// Load all "sides" of the box.
-var r = "textures/skybox/";
-			var urls = [ r + "skybox_px.jpg", r + "skybox_nx.jpg",
-						 r + "skybox_py.jpg", r + "skybox_ny.jpg",
-						 r + "skybox_pz.jpg", r + "skybox_nz.jpg" ];
-textureCube = new THREE.CubeTextureLoader().load( urls );
-textureCube.format = THREE.RGBFormat;
-textureCube.mapping = THREE.CubeReflectionMapping;
-textureCube.encoding = THREE.sRGBEncoding;
-var cubeShader = THREE.ShaderLib[ "cube" ];
-			var cubeMaterial = new THREE.ShaderMaterial( {
-				fragmentShader: cubeShader.fragmentShader,
-				vertexShader: cubeShader.vertexShader,
-				uniforms: cubeShader.uniforms,
-				depthWrite: false,
-				side: THREE.BackSide
-			} );
-			cubeMaterial.uniforms[ "tCube" ].value = textureCube;
-			Object.defineProperty( cubeMaterial, 'map', {
-				get: function () {
-					return this.uniforms.tCube.value;
-				}
-			} );
-
-// Assign the skybox's textures to a new cube; This will be the skybox.
-cubeMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 100, 100, 100 ), cubeMaterial );
-
-// Add the skybox and camera to the scene.
-backgroundScene.add(cubeMesh);
-backgroundScene.add(cameraCube);
+   // Create the floor.
+   var floorGeo = new THREE.CubeGeometry(10 * FLOOR_UNIT_SIZE, 10, 10 * FLOOR_UNIT_SIZE);
+   floorGeo.computeVertexNormals();
+   floorGeo.computeFaceNormals();
+   
+   // Load the floor with the THREE.js grass texture.
+   loader = new THREE.TextureLoader();
+   loader.load('/three.js-master/examples/textures/terrain/grasslight-big.jpg', function( texture ) {
+      var floorMat = new THREE.MeshBasicMaterial({
+         map: texture
+      });
+      var floor = new THREE.Mesh(floorGeo, floorMat);
+      
+      scene.add(floor);
+   });
+   
+   // Load both weather vanes into the game. These will point in the direction of the wind.
+   loader = new THREE.PLYLoader();
+   loader.load( 'models/wind.ply', function (geometry) {
+      geometry.computeVertexNormals();
+      var material = new THREE.MeshStandardMaterial( { color: 0x4d2600, flatShading: true } );
+   
+      // Rooster 1   
+      var rooster1 = new THREE.Mesh( geometry, material );
+      
+      // Set first rooster next to player 1.
+      rooster1.position.y = 75;
+      rooster1.position.x = 100;
+      rooster1.position.z = -900;
+      
+      // Find the angle between the x and z values of the wind. Then rotate the rooster by that angle.
+      let angle = Math.atan2(wind.z,-wind.x);
+      rooster1.rotation.x = - Math.PI / 2;
+      rooster1.rotation.z = angle;
+      rooster1.rotation.z += (1.5708*2); 
+      rooster1.scale.multiplyScalar(.1);
+      rooster1.castShadow = true;
+      rooster1.receiveShadow = true;
+      
+      scene.add(rooster1);
+   
+      // Rooster 2
+      var rooster2 = new THREE.Mesh( geometry, material );
+   
+      // Set first rooster next to player 2.
+      rooster2.position.y = 75;
+      rooster2.position.x = -100;
+      rooster2.position.z = 900;
+   
+      // Find the angle between the x and z values of the wind. Then rotate the rooster by that angle.
+      angle = Math.atan2(wind.z,-wind.x);
+      rooster2.rotation.x = - Math.PI / 2;
+      rooster2.rotation.z = angle;
+      rooster2.rotation.z += (1.5708*2); 
+      rooster2.scale.multiplyScalar(.1);
+      rooster2.castShadow = true;
+      rooster2.receiveShadow = true;
+   
+      scene.add(rooster2);
+   } );
+                  
+   // Lighting
+   var directionalLight1 = new THREE.DirectionalLight(0xF7EFBE, .5);
+   directionalLight1.position.set(.5, .9, .5);
+   directionalLight1.castShadow = true;
+   scene.add(directionalLight1);
+   
+   var directionalLight2 = new THREE.DirectionalLight(0xF7EFBE, .5);
+   directionalLight2.position.set(-.5, .9, -.5);
+   directionalLight2.castShadow = true;
+   scene.add(directionalLight2);
+   
+   // Background
+   
+   // To make the skybox, we create a new scene/camera for the background.
+   backgroundScene = new THREE.Scene();
+   cameraCube = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 100000 );
+   
+   // Load all "sides" of the box.
+   var r = "textures/skybox/";
+   var urls = [ r + "skybox_px.jpg", r + "skybox_nx.jpg",
+                r + "skybox_py.jpg", r + "skybox_ny.jpg",
+                r + "skybox_pz.jpg", r + "skybox_nz.jpg" ];
+   
+   textureCube = new THREE.CubeTextureLoader().load( urls );
+   textureCube.format = THREE.RGBFormat;
+   textureCube.mapping = THREE.CubeReflectionMapping;
+   textureCube.encoding = THREE.sRGBEncoding;
+   
+   var cubeShader = THREE.ShaderLib[ "cube" ];
+   
+   var cubeMaterial = new THREE.ShaderMaterial( {
+      fragmentShader: cubeShader.fragmentShader,
+      vertexShader: cubeShader.vertexShader,
+      uniforms: cubeShader.uniforms,
+      depthWrite: false,
+      side: THREE.BackSide
+   });
+   
+   cubeMaterial.uniforms[ "tCube" ].value = textureCube;
+   Object.defineProperty( cubeMaterial, 'map', {
+      get: function () {
+         return this.uniforms.tCube.value;
+      }
+   });
+   
+   // Assign the skybox's textures to a new cube; This will be the skybox.
+   cubeMesh = new THREE.Mesh( new THREE.BoxBufferGeometry( 100, 100, 100 ), cubeMaterial );
+   
+   // Add the skybox and camera to the scene.
+   backgroundScene.add(cubeMesh);
+   backgroundScene.add(cameraCube);
 }
 
 /**
@@ -253,20 +262,20 @@ backgroundScene.add(cameraCube);
  * @author Chandler Davis
  */
 function initCameras() {
-	cam1 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
-	cam1.position.y = 150;
-	cam1.position.x = 0;
-	cam1.position.z = -1325;
-	cam1.lookAt(new THREE.Vector3( 0, -100, 825 ));
-	scene.add(cam1);
+   cam1 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
+   cam1.position.y = 150;
+   cam1.position.x = 0;
+   cam1.position.z = -1325;
+   cam1.lookAt(new THREE.Vector3( 0, -100, 825 ));
+   scene.add(cam1);
 
-	cam2 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
-	cam2.position.y = 150;
-	cam2.position.x = 0;
-	cam2.position.z = 1325;
-	cam2.lookAt(new THREE.Vector3( 0, -100, -825 ));
-	scene.add(cam2);
-	activeCam = cam1;
+   cam2 = new THREE.PerspectiveCamera(60, ASPECT_RATIO, 1, 10000);
+   cam2.position.y = 150;
+   cam2.position.x = 0;
+   cam2.position.z = 1325;
+   cam2.lookAt(new THREE.Vector3( 0, -100, -825 ));
+   scene.add(cam2);
+   activeCam = cam1;
 }
 
 /**
@@ -274,54 +283,58 @@ function initCameras() {
  * @author Chandler Davis, Clayton Nida
  */
  function initPlayers() {
-	// Initialize player one's bow object
-	var bow1 = new THREE.Object3D();
-	bow1.name = "bow1";		
-	
-	// Initialize player two's bow object
-	var bow2 = new THREE.Object3D();
-	bow2.name = "bow2";
+   // Initialize player one's bow object
+   var bow1 = new THREE.Object3D();
+   bow1.name = "bow1";     
+   
+   // Initialize player two's bow object
+   var bow2 = new THREE.Object3D();
+   bow2.name = "bow2";
 
-	// Load the PLY model for the bows and assign the meshes to their corresponding objects.
-	loader.load( 'models/bow.ply', function (geometry) {
-		geometry.computeVertexNormals();
-		var material = new THREE.MeshStandardMaterial({ color: 0x7c440b, flatShading: true });
-		var bowMesh = new THREE.Mesh( geometry, material );
-		bowMesh.rotateZ(1.5708);
-		bowMesh.rotateY(2 * 1.5708);
-		bowMesh.scale.multiplyScalar(.35);
-		if(player1.bow) {
-			player1.bow.add(bowMesh);
-		}
-		if(player2.bow) {
-			player2.bow.add(bowMesh.clone());
-		}
-	});
+   // Load the PLY model for the bows and assign the meshes to their corresponding objects.
+   loader.load( 'models/bow.ply', function (geometry) {
+      geometry.computeVertexNormals();
+      
+      var material = new THREE.MeshStandardMaterial({ color: 0x7c440b, flatShading: true });
+      
+      var bowMesh = new THREE.Mesh( geometry, material );
+      bowMesh.rotateZ(1.5708);
+      bowMesh.rotateY(2 * 1.5708);
+      bowMesh.scale.multiplyScalar(.35);
+      
+      if(player1.bow) {
+         player1.bow.add(bowMesh);
+      }
 
-	// Initialize player one and add to scene.
-	player1 = new Player(0xff0000, new THREE.Vector3(0, 60, -1125), new THREE.Euler(0, 0, 0), bow1);
-	players.push(player1);
-	scene.add(player1.playerDummy);
-	
-	// Add player 1's meshes to array for collision detection.
-	player1HitBoxes.push(player1.upperTorso,player1.leftShoulder,player1.rightShoulder,player1.leftArm,
-	player1.rightArm,player1.rightHand,player1.leftHand,player1.waist,player1.leftThigh,player1.head,
-	player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot,
-	player1.leftElbow,player1.rightElbow,player1.lowerTorso, player1.upperTorsoDummy);
+      if(player2.bow) {
+         player2.bow.add(bowMesh.clone());
+      }
+   });
 
-	// Initialize player two and add to scene.
-	player2 = new Player(0x0000ff, new THREE.Vector3(0, 60, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
-	players.push(player2);
-	scene.add(player2.playerDummy);
+   // Initialize player one and add to scene.
+   player1 = new Player(0xff0000, new THREE.Vector3(0, 60, -1125), new THREE.Euler(0, 0, 0), bow1);
+   players.push(player1);
+   scene.add(player1.playerDummy);
+   
+   // Add player 1's meshes to array for collision detection.
+   player1HitBoxes.push(player1.upperTorso,player1.leftShoulder,player1.rightShoulder,player1.leftArm,
+   player1.rightArm,player1.rightHand,player1.leftHand,player1.waist,player1.leftThigh,player1.head,
+   player1.rightThigh,player1.leftCalf,player1.rightCalf,player1.leftFoot,player1.rightFoot,
+   player1.leftElbow,player1.rightElbow,player1.lowerTorso, player1.upperTorsoDummy);
 
-	// Add player 2's meshes to array for collision detection.
-	player2HitBoxes.push(player2.upperTorso,player2.leftShoulder,player2.rightShoulder,player2.leftArm,
-	player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh,player2.head,
-	player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot,
-	player2.leftElbow,player2.rightElbow,player2.lowerTorso, player2.upperTorsoDummy);
-	
-	// Set player one as the first player to move and shoot.
-	activePlayer = player1;
+   // Initialize player two and add to scene.
+   player2 = new Player(0x0000ff, new THREE.Vector3(0, 60, 1125), new THREE.Euler(0, 1.5708 * 2, 0), bow2);
+   players.push(player2);
+   scene.add(player2.playerDummy);
+
+   // Add player 2's meshes to array for collision detection.
+   player2HitBoxes.push(player2.upperTorso,player2.leftShoulder,player2.rightShoulder,player2.leftArm,
+   player2.rightArm,player2.rightHand,player2.leftHand,player2.waist,player2.leftThigh,player2.head,
+   player2.rightThigh,player2.leftCalf,player2.rightCalf,player2.leftFoot,player2.rightFoot,
+   player2.leftElbow,player2.rightElbow,player2.lowerTorso, player2.upperTorsoDummy);
+   
+   // Set player one as the first player to move and shoot.
+   activePlayer = player1;
 }
 
 /**
@@ -329,57 +342,58 @@ function initCameras() {
 * @Author Clayton Nida
 */
 function initWind() {
-	wind = new THREE.Vector3(getRandomFromRange(-2*Math.PI, 2*Math.PI), 1, getRandomFromRange(-2*Math.PI, 2*Math.PI));
+   wind = new THREE.Vector3(getRandomFromRange(-2*Math.PI, 2*Math.PI), 1, getRandomFromRange(-2*Math.PI, 2*Math.PI));
 }
+
 /**
 * Sets the basics to be used for physics.
 * Derived from a threejs.org example.
 */
 function initPhysics() {
-	// Physics configuration
-	collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-	
-	dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
-	broadphase = new Ammo.btDbvtBroadphase();
-	solver = new Ammo.btSequentialImpulseConstraintSolver();
-	
-	physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-	physicsWorld.setGravity( new Ammo.btVector3( 0, -GRAVITY/50, 0) );
+   // Physics configuration
+   collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+   
+   dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+   broadphase = new Ammo.btDbvtBroadphase();
+   solver = new Ammo.btSequentialImpulseConstraintSolver();
+   
+   physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
+   physicsWorld.setGravity( new Ammo.btVector3( 0, -GRAVITY/50, 0) );
 }
 
 // Animation.
 function animate() {
-	if (runAnim) {	
-		requestAnimationFrame(animate); 
-		updateParticles();
-	}
-	render();
+   if (runAnim) { 
+      requestAnimationFrame(animate); 
+      updateParticles();
+   }
+   render();
 }
 
 // Update and display.
 function render() 
 {
-	// Set a time and physics step speed based on THREE.js Clock.
-	var delta = clock.getDelta();
-	var speed = delta * PHYS_SPEED;
+   // Set a time and physics step speed based on THREE.js Clock.
+   var delta = clock.getDelta();
+   var speed = delta * PHYS_SPEED;
 
-	// Update phyics and detect collision.
-	updatePhysics(speed);
-	detectCollision();
-	
-	// Rotate the skybox by a fraction of the wind's x value.
-	cameraCube.rotation.y += wind.x * 0.0001;
-	cameraCube.rotation.z = (activeCam.rotation.z);
-	cameraCube.rotation.x = (activeCam.rotation.x);
-	
-	renderer.autoClear = false;
-	renderer.gammaOutput = true;
+   // Update phyics and detect collision.
+   updatePhysics(speed);
+   detectCollision();
+   
+   // Rotate the skybox by a fraction of the wind's x value.
+   cameraCube.rotation.y += wind.x * 0.0001;
+   cameraCube.rotation.z = (activeCam.rotation.z);
+   cameraCube.rotation.x = (activeCam.rotation.x);
+   
+   renderer.autoClear = false;
+   renderer.gammaOutput = true;
 
-	renderer.clear();
-	renderer.render(backgroundScene, cameraCube);
-	renderer.render(scene, activeCam);
+   renderer.clear();
+   renderer.render(backgroundScene, cameraCube);
+   renderer.render(scene, activeCam);
 
-	aim();
+   aim();
 }
 
 /**
@@ -387,64 +401,60 @@ function render()
 * @Author Clayton Nida
 */
 function updateParticles() {
-	// Check that particles exist.
-	if(particles.vertices.length > 0) {
+   // Check that particles exist.
+   if(particles.vertices.length > 0) {
 
-		// Loop through our particles and update the posistions with random values within a close range.
-		// This is done to keep the particles close, giving the look that the blood came from a certain location. 
-		for (let i = 0; i < particleCount; i++) {
-			var particle = particles.vertices[i];
-			particle.x = getRandomFromRange(particle.x - 1, particle.x + 1);
-			particle.y = getRandomFromRange(particle.y - .7, particle.y);
-			particle.z = getRandomFromRange(particle.z - 1, particle.z + 1);
-		}
+      // Loop through our particles and update the posistions with random values within a close range.
+      // This is done to keep the particles close, giving the look that the blood came from a certain location. 
+      for (let i = 0; i < particleCount; i++) {
+         var particle = particles.vertices[i];
+         particle.x = getRandomFromRange(particle.x - 1, particle.x + 1);
+         particle.y = getRandomFromRange(particle.y - .7, particle.y);
+         particle.z = getRandomFromRange(particle.z - 1, particle.z + 1);
+      }
 
-		// Flag the particles for an update.
-		particles.verticesNeedUpdate = true;
+      // Flag the particles for an update.
+      particles.verticesNeedUpdate = true;
 
-		// Check to see if the blood fell beneath the map, if so, remove the system and clear the array.
-		if(particles.vertices[0].y < -50) {
-			particles = new THREE.Geometry();
-			scene.remove(scene.getObjectByName("particleSys"));
-		}
-	}
+      // Check to see if the blood fell beneath the map, if so, remove the system and clear the array.
+      if(particles.vertices[0].y < -50) {
+         particles = new THREE.Geometry();
+         scene.remove(scene.getObjectByName("particleSys"));
+      }
+   }
 }
 
 /**
 * A function that updates the arrows physics by the given step speed.
 * @Author Clayton Nida (A modified threejs.org example)
 */
-function updatePhysics(deltaTime) 
-{
-	// Step world
-	physicsWorld.stepSimulation( deltaTime, 10 );
-	
-	// Loop through arrows and update there positions/rotations based on the gravity and wind.
-	for ( var i = 0, il = arrows.length; i < il; i++ ) {
-		var objThree = arrows[i];
-		var objPhys = objThree.userData.physicsBody;
-		var motionState = objPhys.getMotionState();
-		
-		if (motionState) {
-			motionState.getWorldTransform( transformAux1 );
-			
-			var p = transformAux1.getOrigin();
-			var q = transformAux1.getRotation();
+function updatePhysics(deltaTime) {
+   // Step world
+   physicsWorld.stepSimulation( deltaTime, 10 );
+   
+   // Loop through arrows and update there positions/rotations based on the gravity and wind.
+   for ( var i = 0, il = arrows.length; i < il; i++ ) {
+      var objThree = arrows[i];
+      var objPhys = objThree.userData.physicsBody;
+      var motionState = objPhys.getMotionState();
+      
+      if (motionState) {
+         motionState.getWorldTransform( transformAux1 );
+         
+         var p = transformAux1.getOrigin();
+         var q = transformAux1.getRotation();
 
-			objThree.position.set(p.x(), p.y(), p.z());
+         objThree.position.set(p.x(), p.y(), p.z());
 
-			if(activeCam.position.z < 0)
-			{
-				objThree.rotation.y = (4.7124);
-				objThree.userData.collided = false;
-			}
-			else
-			{
-				objThree.rotation.y = (-4.7124);
-				objThree.userData.collided = false;
-			}	
-		}
-	}
+         if(activeCam.position.z < 0) {
+            objThree.rotation.y = (4.7124);
+            objThree.userData.collided = false;
+         } else {
+            objThree.rotation.y = (-4.7124);
+            objThree.userData.collided = false;
+         }  
+      }
+   }
 }
 
 /**
@@ -452,69 +462,70 @@ function updatePhysics(deltaTime)
 * @Author Clayton Nida
 */
 function detectCollision() {
-// Loop through our arrows and check if the arrow is still visible, if not, remove it.
-for (let index = 0; index < arrows.length; index++) 
-	{
-		let thisArrow = arrows[index];
-		if(thisArrow.position.x > 2000 || thisArrow.position.x < -2000 
-		|| thisArrow.position.z > 2000 || thisArrow.position.z < -2000 
-		|| thisArrow.position.y < 10) {
 
-			scene.remove(thisArrow);
-			arrows.shift();
+   // Loop through our arrows and check if the arrow is still visible, if not, remove it.
+   for (let index = 0; index < arrows.length; index++) {
+      let thisArrow = arrows[index];
+      
+      if(thisArrow.position.x > 2000 || thisArrow.position.x < -2000 || thisArrow.position.z > 2000 || 
+         thisArrow.position.z < -2000 || thisArrow.position.y < 10) 
+      {
 
-			// Once the arrow is destroyed, switch players and break the loop.
-			switchSides();
-			break;
-		}
-		// Collision Detection.
-		if(arrows[index])
-		{
-			// Loop through arrows, and grab each of its vertices.
-			for (var vertexIndex = 0; vertexIndex < arrows[index].geometry.attributes.position.array.length/3; vertexIndex++)
-			{       
-				// Create a new vector containing the vertex's local coordinates.
-				var localVertex = new THREE.Vector3(arrows[index].geometry.attributes.position.array[vertexIndex *3],arrows[index].geometry.attributes.position.array[vertexIndex*3+1],arrows[index].geometry.attributes.position.array[vertexIndex*3+2]);
+         scene.remove(thisArrow);
+         arrows.shift();
 
-				// Convert them to world coordinates.
-				var globalVertex = localVertex.applyMatrix4(arrows[index].matrix);
+         // Once the arrow is destroyed, switch players and break the loop.
+         switchSides();
+         break;
+      }
 
-				// Subtract the position from the world coordinates to obtain a directional vector of the arrow.
-				var directionVector = globalVertex.sub(arrows[index].position);
+      // Collision Detection.
+      if(arrows[index]) {
 
-				// Create a new THREE.js Raycaster object, using the arrows position as the origin, and the normalized direcional vector for the direction.
-				var ray = new THREE.Raycaster(arrows[index].position, directionVector.clone().normalize());
+         // Loop through arrows, and grab each of its vertices.
+         for (var vertexIndex = 0; vertexIndex < arrows[index].geometry.attributes.position.array.length/3; vertexIndex++) {
 
-				// Use the active cams position as an indecator for which player we are.
-				// Then pass the array of each players hit boxes (meshes) as arguments to the raycasters "intersectObjects" method.
-				// This will store a collection of data if there was, in-fact, a collision.
-				if(activeCam.position.z > 0) {
-					var collisionResults = ray.intersectObjects(player1HitBoxes);
-				} else {
-					var collisionResults = ray.intersectObjects(player2HitBoxes);
-				}
-				vertexIndex += 3;
+            // Create a new vector containing the vertex's local coordinates.
+            var localVertex = new THREE.Vector3(arrows[index].geometry.attributes.position.array[vertexIndex *3],arrows[index].geometry.attributes.position.array[vertexIndex*3+1],arrows[index].geometry.attributes.position.array[vertexIndex*3+2]);
 
-				// Check that our collisionResults contains data, if so, pull the distance value of the data (this is the distance of the origin of the ray
-				// and the intersection) and compare it to the length of the directional vector, if it is less, then proceed.
-				// this is done to check that ray from the arrow's origin are intersecting the cube. 
-				// See @https://stemkoski.github.io/Three.js/Collision-Detection.html and @https://threejs.org/docs/index.html#api/en/core/Raycaster for more information.
-				if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) 
-				{
-					let arrowClone = arrows[0].clone();
+            // Convert them to world coordinates.
+            var globalVertex = localVertex.applyMatrix4(arrows[index].matrix);
 
-					// Update the health of the player and spawn a particle system for blood-like effects.
-					doCollision(arrowClone);
+            // Subtract the position from the world coordinates to obtain a directional vector of the arrow.
+            var directionVector = globalVertex.sub(arrows[index].position);
 
-					// Switch to other player and camera.
-					switchSides();
-					
-					// Remove the arrow from the array.
-					arrows.shift();
-				}
-			}
-		}
-	}
+            // Create a new THREE.js Raycaster object, using the arrows position as the origin, and the normalized direcional vector for the direction.
+            var ray = new THREE.Raycaster(arrows[index].position, directionVector.clone().normalize());
+
+            // Use the active cams position as an indecator for which player we are.
+            // Then pass the array of each players hit boxes (meshes) as arguments to the raycasters "intersectObjects" method.
+            // This will store a collection of data if there was, in-fact, a collision.
+            if(activeCam.position.z > 0) {
+               var collisionResults = ray.intersectObjects(player1HitBoxes);
+            } else {
+               var collisionResults = ray.intersectObjects(player2HitBoxes);
+            }
+            vertexIndex += 3;
+
+            // Check that our collisionResults contains data, if so, pull the distance value of the data (this is the distance of the origin of the ray
+            // and the intersection) and compare it to the length of the directional vector, if it is less, then proceed.
+            // this is done to check that ray from the arrow's origin are intersecting the cube. 
+            // See @https://stemkoski.github.io/Three.js/Collision-Detection.html and @https://threejs.org/docs/index.html#api/en/core/Raycaster for more information.
+            if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
+               let arrowClone = arrows[0].clone();
+
+               // Update the health of the player and spawn a particle system for blood-like effects.
+               doCollision(arrowClone);
+
+               // Switch to other player and camera.
+               switchSides();
+               
+               // Remove the arrow from the array.
+               arrows.shift();
+            }
+         }
+      }
+   }
 }
 
 /**
@@ -522,95 +533,103 @@ for (let index = 0; index < arrows.length; index++)
 * @Author Clayton Nida
 */
 function doCollision(arrowClone) {
-	// Pull the current health values from the CSS.
-	var player1Health = $('.health-bar').data('value');
-	var player2Health = $('.health-bar2').data('value');
-	var total = $('.health-bar').data('total');
 
-	// Check the current player by camera position.
-	if(activeCam.position.z > 0) {
-		// Calculate new health values.
-		var newValue2 = player1Health - PROJECTILE_DAMAGE;
-		var barWidth = (newValue2 / total) * 100;
-		var hitWidth = (PROJECTILE_DAMAGE / player1Health) * 100 + "%";
-	
-		// Update the CSS with new values.
-		$('.hit').css({width: hitWidth,});
-		$('.health-bar').data({value: newValue2,});
-		setTimeout(function(){
-			$('.hit').css({width: '0',});
-			$('.bar').css({width: barWidth + "%",});
-			}, 500);
+   // Pull the current health values from the CSS.
+   var player1Health = $('.health-bar').data('value');
+   var player2Health = $('.health-bar2').data('value');
+   var total = $('.health-bar').data('total');
 
-		// Create a blood-like particle system at the area of contact.
-		createBloodParticleSystem(arrowClone);
-	} else {
-		// Calculate new health values.
-		var newValue2 = player2Health - PROJECTILE_DAMAGE;
-		var barWidth = (newValue2 / total) * 100;
-		var hitWidth = (PROJECTILE_DAMAGE / player2Health) * 100 + "%";
+   // Check the current player by camera position.
+   if(activeCam.position.z > 0) {
+      
+      // Calculate new health values.
+      var newValue2 = player1Health - PROJECTILE_DAMAGE;
+      var barWidth = (newValue2 / total) * 100;
+      var hitWidth = (PROJECTILE_DAMAGE / player1Health) * 100 + "%";
+   
+      // Update the CSS with new values.
+      $('.hit').css({width: hitWidth,});
+      $('.health-bar').data({value: newValue2,});
+      
+      setTimeout(function() {
+         $('.hit').css({width: '0'});
+         $('.bar').css({width: barWidth + "%"});
+      }, 500);
 
-		// Update the CSS with new values.
-		$('.hit2').css({width: hitWidth,});
-		$('.health-bar2').data({value: newValue2,});
-		setTimeout(function(){
-			$('.hit2').css({width: '0',});
-			$('.bar2').css({width: barWidth + "%",});
-			}, 500);
+      // Create a blood-like particle system at the area of contact.
+      createBloodParticleSystem(arrowClone);
+   } else {
+      
+      // Calculate new health values.
+      var newValue2 = player2Health - PROJECTILE_DAMAGE;
+      var barWidth = (newValue2 / total) * 100;
+      var hitWidth = (PROJECTILE_DAMAGE / player2Health) * 100 + "%";
 
-		// Create a blood-like particle system at the area of contact.
-		createBloodParticleSystem(arrowClone);
-	}
+      // Update the CSS with new values.
+      $('.hit2').css({width: hitWidth,});
+      $('.health-bar2').data({value: newValue2,});
+      
+      setTimeout(function(){
+         $('.hit2').css({width: '0'});
+         $('.bar2').css({width: barWidth + "%"});
+      }, 500);
 
-	// Check if either players health has dropped to 1 or less.
-	if(player1Health <= 1 || player2Health <= 1) {
-		// A string stores the winning player based on which player ended with more health.
-		let winner = player1Health > player2Health ? "Player 1" : "Player 2";
+      // Create a blood-like particle system at the area of contact.
+      createBloodParticleSystem(arrowClone);
+   }
 
-		// Stop animation and restart the game.
-		runAnim = false;
-		$(renderer.domElement).fadeOut();
-		$('#intro').fadeIn();
-		$('#intro').html(winner +' wins! Click to restart...');
-		$('#intro').one('click', function() {
-			location = location;
-		});
-	}
+   // Check if either players health has dropped to 1 or less.
+   if(player1Health <= 1 || player2Health <= 1) {
+
+      // A string stores the winning player based on which player ended with more health.
+      let winner = player1Health > player2Health ? "Player 1" : "Player 2";
+
+      // Stop animation and restart the game.
+      runAnim = false;
+      $(renderer.domElement).fadeOut();
+      $('#intro').fadeIn();
+      $('#intro').html(winner +' wins! Click to restart...');
+      $('#intro').one('click', function() {
+         location = location;
+      });
+   }
 }
 
 /**
 * Create a blood-like particle system.
 * @Author Clayton Nida
 */
-function createBloodParticleSystem(arrowClone)
-{
-	// Load the particle texture.
-	loader = new THREE.TextureLoader();
-			loader.load('textures/particle2.png', function( texture ){
-				var pMaterial = new THREE.PointsMaterial( {
-					color: 0xFF0000,
-					size: 2,
-					map: texture,
-					transparent: true
-				});
+function createBloodParticleSystem(arrowClone) {
 
-			// Create new particles at a locations around the contact point.
-			for (var p = 0; p < particleCount; p++) {
-				var pX = getRandomFromRange(arrowClone.position.x - 10, arrowClone.position.x + 10),
-					pY = getRandomFromRange(arrowClone.position.y - 10, arrowClone.position.y + 10),
-					pZ = getRandomFromRange(arrowClone.position.z - 10, arrowClone.position.z + 10),
-					particle = new THREE.Vector3(pX, pY, pZ);
-					particle.velocity = new THREE.Vector3(0,-Math.random(),0);
+   // Load the particle texture.
+   loader = new THREE.TextureLoader();
+   loader.load('textures/particle2.png', function( texture ){
 
-				particles.vertices.push(particle);
-			}
+      var pMaterial = new THREE.PointsMaterial( {
+         color: 0xFF0000,
+         size: 2,
+         map: texture,
+         transparent: true
+      });
 
-			// Create a new particle system with the particles and material.
-			particleSystem = new THREE.Points(particles, pMaterial);
-			particleSystem.name = "particleSys";
+      // Create new particles at a locations around the contact point.
+      for (var p = 0; p < particleCount; p++) {
+         var pX = getRandomFromRange(arrowClone.position.x - 10, arrowClone.position.x + 10);
+         var pY = getRandomFromRange(arrowClone.position.y - 10, arrowClone.position.y + 10);
+         var pZ = getRandomFromRange(arrowClone.position.z - 10, arrowClone.position.z + 10);
 
-			scene.add(particleSystem);
-		});
+         var particle = new THREE.Vector3(pX, pY, pZ);
+         particle.velocity = new THREE.Vector3(0, -Math.random(), 0);
+
+         particles.vertices.push(particle);
+      }
+
+      // Create a new particle system with the particles and material.
+      particleSystem = new THREE.Points(particles, pMaterial);
+      particleSystem.name = "particleSys";
+
+      scene.add(particleSystem);
+   });
 }
 
 /**
@@ -618,28 +637,28 @@ function createBloodParticleSystem(arrowClone)
  * @author Chandler Davis
  */
  function aim() {
-	raycaster.setFromCamera( mouseCoords, activeCam);
+   raycaster.setFromCamera( mouseCoords, activeCam);
 
-	var dir = raycaster.ray.direction;
-	var axis = new THREE.Vector3();
+   var dir = raycaster.ray.direction;
+   var axis = new THREE.Vector3();
 
-	// Set the axis depending on which player is active
-	if(activePlayer == player1) {
-		axis.set(dir.z, 0, -dir.x).normalize();
-	} else {
-		axis.set(-dir.z, 0, dir.x).normalize();
-	}
-	
-	// Set the aim cube's quaternion's direction - avoiding 1 and -1
-	if(activePlayer.bow) {
-		if ( dir.y > 0.99999 ) {
-			activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
-		} else if ( dir.y < -0.99999 ) {
-			activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
-		} else {
-			activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
-		}
-	}
+   // Set the axis depending on which player is active
+   if(activePlayer == player1) {
+      axis.set(dir.z, 0, -dir.x).normalize();
+   } else {
+      axis.set(-dir.z, 0, dir.x).normalize();
+   }
+   
+   // Set the aim cube's quaternion's direction - avoiding 1 and -1
+   if(activePlayer.bow) {
+      if ( dir.y > 0.99999 ) {
+         activePlayer.aimDummy.quaternion.set( 0, 0, 0, 1 );
+      } else if ( dir.y < -0.99999 ) {
+         activePlayer.aimDummy.quaternion.set( 1, 0, 0, 0 );
+      } else {
+         activePlayer.aimDummy.quaternion.setFromAxisAngle( axis, Math.acos( dir.y ) );
+      }
+   }
 }
 
 /**
@@ -647,17 +666,17 @@ function createBloodParticleSystem(arrowClone)
  * @author Chandler Davis
  */
 function switchSides() {
-	if(activeCam == cam1) {
-		activeCam = cam2;
-	} else {
-		activeCam = cam1;
-	}
+   if(activeCam == cam1) {
+      activeCam = cam2;
+   } else {
+      activeCam = cam1;
+   }
 
-	if(activePlayer == player1) {
-		activePlayer = player2;
-	} else {
-		activePlayer = player1;
-	}
+   if(activePlayer == player1) {
+      activePlayer = player2;
+   } else {
+      activePlayer = player1;
+   }
 }
 
 /**
@@ -665,10 +684,10 @@ function switchSides() {
 * @Author Clayton Nida (Derived from the three.js documentation)
 */
 function onDocumentMouseMove(e) {
-	mouseCoords.set(
-		 ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
-		-( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
-	);
+   mouseCoords.set(
+       ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
+      -( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
+   );
 }
 
 /**
@@ -677,16 +696,17 @@ function onDocumentMouseMove(e) {
 */
 function onDocumentMouseDown(e) {
 
-	// Reset the power and arrow speed, and update CSS.
-	pow = .1;
-	ARROW_SPEED = 1;
-	$('.power').css({width: 0+"%",});
-	$('.power-bar').css({value: 0,});
+   // Reset the power and arrow speed, and update CSS.
+   pow = .1;
+   ARROW_SPEED = 1;
 
-	// Prevent infinite loop.
-	if(mousedownID == -1) {
-		mousedownID = setInterval(whileMouseDown, 100);
-	}  
+   $('.power').css({width: 0+"%",});
+   $('.power-bar').css({value: 0,});
+
+   // Prevent infinite loop.
+   if(mousedownID == -1) {
+      mousedownID = setInterval(whileMouseDown, 100);
+   }  
 }
 
 /**
@@ -694,35 +714,36 @@ function onDocumentMouseDown(e) {
 * @Author Clayton Nida
 */
 function whileMouseDown() {
-	// Check which player is shooting. If player 2 we need to reverse how the power's z value is being scaled.
-	if(activeCam.position.z < 0) {
-		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))+ARROW_SPEED) );
-	} else {
-		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))-ARROW_SPEED) );
-	}
-	
-	// Grab CSS values of the power bar.
-	var value = $('.power-bar').data('value');
-	var total = $('.power-bar').data('total');
-	
-	// Update the values based on power.
-    var newValue = pow;
-	pow += .035;
-	var barWidth = (newValue / total) * 100;
-  
-	// Increase the arrow speed and power bars width.
-	if(pow * 100 < 100) {
-		var powerWidth = (pow) * 100 + "%";
-		ARROW_SPEED += .6;
-	} else {
-		var powerWidth = 100 + "%";
-	}
-    // Update the data of the CSS.
-	$('.power').css({width: powerWidth,});
-	$('.power-bar').css({value: newValue,});
 
-	// Make the player's arm pull back on the string.
-	animatePullBack();
+   // Check which player is shooting. If player 2 we need to reverse how the power's z value is being scaled.
+   if(activeCam.position.z < 0) {
+      physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))+ARROW_SPEED) );
+   } else {
+      physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))-ARROW_SPEED) );
+   }
+   
+   // Grab CSS values of the power bar.
+   var value = $('.power-bar').data('value');
+   var total = $('.power-bar').data('total');
+   
+   // Update the values based on power.
+   var newValue = pow;
+   pow += .035;
+   var barWidth = (newValue / total) * 100;
+  
+   // Increase the arrow speed and power bars width.
+   if(pow * 100 < 100) {
+      var powerWidth = (pow) * 100 + "%";
+      ARROW_SPEED += .6;
+   } else {
+      var powerWidth = 100 + "%";
+   }
+    // Update the data of the CSS.
+   $('.power').css({width: powerWidth,});
+   $('.power-bar').css({value: newValue,});
+
+   // Make the player's arm pull back on the string.
+   animatePullBack();
 }
 
 /**
@@ -730,56 +751,57 @@ function whileMouseDown() {
 * @Author Clayton Nida
 */
 function onDocumentMouseUp(e) {
-	if(mousedownID != -1) 
-	{  //Only stop if exists
-	  clearInterval(mousedownID);
-	  mousedownID = -1;
-	}
-	
-	// Load/Create a new arrow at the mouse coordinates, and oriented by the raycaster.
-	loader = new THREE.PLYLoader();
-	loader.load( 'models/Arrow.ply', function (geometry) {
-		var arrowMass = 1;
-		var arrowRadius = 2;
 
-		geometry.computeVertexNormals();
+   // Only stop if it exists.
+   if(mousedownID != -1) {  
+     clearInterval(mousedownID);
+     mousedownID = -1;
+   }
+   
+   // Load/Create a new arrow at the mouse coordinates, and oriented by the raycaster.
+   loader = new THREE.PLYLoader();
+   loader.load( 'models/Arrow.ply', function (geometry) {
+      var arrowMass = 1;
+      var arrowRadius = 2;
 
-		var material = new THREE.MeshStandardMaterial({ color: 0x130d06, flatShading: true });
-		var arrowMesh = new THREE.Mesh(geometry, material);
-		
-		// This is the position the arrow is initially loaded, it will be positioned at the arrow coords next.
-		arrowMesh.position.y = 100;
-		arrowMesh.position.x = -100;
-		arrowMesh.position.z = 900;
-		
-		// Face arrow in the direction the camera is faceing.
-		arrowMesh.rotation = raycaster.ray.direction;
-		arrowMesh.scale.multiplyScalar(10.0);
-		arrowMesh.scale.x = 4;
-		arrowMesh.castShadow = true;
-		arrowMesh.receiveShadow = true;
+      geometry.computeVertexNormals();
 
-		var arrowShape = new Ammo.btSphereShape(arrowRadius);
-		arrowShape.setMargin(margin);
-		
-		// Copy the direction and put the arrow at the bow's location with that direction.
-		pos.copy(raycaster.ray.direction);
-		pos.add(activePlayer.bow.getObjectByName("middle").getWorldPosition());
-		quat.set( 0, 0, 0, 1 );
+      var material = new THREE.MeshStandardMaterial({ color: 0x130d06, flatShading: true });
+      var arrowMesh = new THREE.Mesh(geometry, material);
+      
+      // This is the position the arrow is initially loaded, it will be positioned at the arrow coords next.
+      arrowMesh.position.y = 100;
+      arrowMesh.position.x = -100;
+      arrowMesh.position.z = 900;
+      
+      // Face arrow in the direction the camera is faceing.
+      arrowMesh.rotation = raycaster.ray.direction;
+      arrowMesh.scale.multiplyScalar(10.0);
+      arrowMesh.scale.x = 4;
+      arrowMesh.castShadow = true;
+      arrowMesh.receiveShadow = true;
 
-		// Assign a rigid body to the arrows mesh, to allow it to be affected by physics.
-		var arrowBody = createRigidBody(arrowMesh, arrowShape, arrowMass, pos, quat);
-		pos.copy(raycaster.ray.direction);
-		pos.multiplyScalar(24);
-		arrowBody.setLinearVelocity(new Ammo.btVector3(pos.x, pos.y, pos.z));
+      var arrowShape = new Ammo.btSphereShape(arrowRadius);
+      arrowShape.setMargin(margin);
+      
+      // Copy the direction and put the arrow at the bow's location with that direction.
+      pos.copy(raycaster.ray.direction);
+      pos.add(activePlayer.bow.getObjectByName("middle").getWorldPosition());
+      quat.set( 0, 0, 0, 1 );
 
-		// Reset the power bar.
-		$('.power').css({width: 0+"%",});
-		$('.power-bar').css({value: 0,});
-		
-		// Reset the pull back animation.
-		resetPullBack();
-	});
+      // Assign a rigid body to the arrows mesh, to allow it to be affected by physics.
+      var arrowBody = createRigidBody(arrowMesh, arrowShape, arrowMass, pos, quat);
+      pos.copy(raycaster.ray.direction);
+      pos.multiplyScalar(24);
+      arrowBody.setLinearVelocity(new Ammo.btVector3(pos.x, pos.y, pos.z));
+
+      // Reset the power bar.
+      $('.power').css({width: 0+"%",});
+      $('.power-bar').css({value: 0,});
+      
+      // Reset the pull back animation.
+      resetPullBack();
+   });
 }
 
 /**
@@ -787,22 +809,22 @@ function onDocumentMouseUp(e) {
  * @author Chandler Davis
  */
 function animatePullBack() {
-	if(activePlayer.rightHandDummy.position.y > -50.9999) {
-		activePlayer.rightHandDummy.position.y -= .7;	
-	}
+   if(activePlayer.rightHandDummy.position.y > -50.9999) {
+      activePlayer.rightHandDummy.position.y -= .7;   
+   }
 
-	if(activePlayer.leftShoulderDummy.rotation.z < -.079999) {
-		activePlayer.leftShoulderDummy.rotateZ(.02);
-	}
+   if(activePlayer.leftShoulderDummy.rotation.z < -.079999) {
+      activePlayer.leftShoulderDummy.rotateZ(.02);
+   }
 
-	if(activePlayer.rightArmDummy.rotation.z > -.42999) {
-		activePlayer.rightArmDummy.rotateZ(-.01);
-		activePlayer.rightElbow.rotateZ(-.03);
-	}
+   if(activePlayer.rightArmDummy.rotation.z > -.42999) {
+      activePlayer.rightArmDummy.rotateZ(-.01);
+      activePlayer.rightElbow.rotateZ(-.03);
+   }
 
-	if(activePlayer.rightElbowDummy.rotation.z < 2.1) {
-		activePlayer.rightElbowDummy.rotateZ(.07);
-	}
+   if(activePlayer.rightElbowDummy.rotation.z < 2.1) {
+      activePlayer.rightElbowDummy.rotateZ(.07);
+   }
 }
 
 /**
@@ -810,89 +832,90 @@ function animatePullBack() {
  * @author Chandler Davis
  */
 function resetPullBack() {
-	activePlayer.rightHandDummy.position.set(-.6, -32, -36);
-	activePlayer.rightArmDummy.rotation.set(0, 0, -.2);
-	activePlayer.rightElbowDummy.rotation.set(0, 0, .2);
-	activePlayer.rightElbow.rotation.set(0, 0, 0);
-	activePlayer.leftShoulderDummy.rotation.set(0, 0, -.6);
+   activePlayer.rightHandDummy.position.set(-.6, -32, -36);
+   activePlayer.rightArmDummy.rotation.set(0, 0, -.2);
+   activePlayer.rightElbowDummy.rotation.set(0, 0, .2);
+   activePlayer.rightElbow.rotation.set(0, 0, 0);
+   activePlayer.leftShoulderDummy.rotation.set(0, 0, -.6);
 }
+
 /**
 * Create the rigid body of an object that will be used for physics.
 * Example code from threejs.org
 */
 function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel ) 
 {
-	if (pos) {
-		object.position.copy( pos );
-	} else {
-		pos = object.position;
-	}
+   if (pos) {
+      object.position.copy( pos );
+   } else {
+      pos = object.position;
+   }
 
-	if (quat) {
-		object.quaternion.copy( quat );
-	} else {
-		quat = object.quaternion;
-	}
-	
-	var transform = new Ammo.btTransform();
+   if (quat) {
+      object.quaternion.copy( quat );
+   } else {
+      quat = object.quaternion;
+   }
+   
+   var transform = new Ammo.btTransform();
 
-	transform.setIdentity();
-	transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
-	transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
-	
-	var motionState = new Ammo.btDefaultMotionState( transform );
-	var localInertia = new Ammo.btVector3( 0, 0, 1 );
-	
-	physicsShape.calculateLocalInertia( mass, localInertia );
-	
-	var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, physicsShape, localInertia );
-	var body = new Ammo.btRigidBody( rbInfo );
-	
-	body.setFriction( 0.5 );
+   transform.setIdentity();
+   transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
+   transform.setRotation( new Ammo.btQuaternion( quat.x, quat.y, quat.z, quat.w ) );
+   
+   var motionState = new Ammo.btDefaultMotionState( transform );
+   var localInertia = new Ammo.btVector3( 0, 0, 1 );
+   
+   physicsShape.calculateLocalInertia( mass, localInertia );
+   
+   var rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, physicsShape, localInertia );
+   var body = new Ammo.btRigidBody( rbInfo );
+   
+   body.setFriction( 0.5 );
 
-	if ( vel ) {
-		body.setLinearVelocity( new Ammo.btVector3( vel.x, vel.y, vel.z ) );
-	}
-	
-	if ( angVel ) {
-		body.setAngularVelocity( new Ammo.btVector3( angVel.x, angVel.y, angVel.z ) );
-	}
-	
-	object.userData.physicsBody = body;
-	object.userData.collided = false;
-	scene.add( object );
-	
-	if ( mass > 0 ) {
-		arrows.push( object );
-		body.setActivationState( 4 ); // Disable deactivation
-	}
-	
-	physicsWorld.addRigidBody( body );
+   if ( vel ) {
+      body.setLinearVelocity( new Ammo.btVector3( vel.x, vel.y, vel.z ) );
+   }
+   
+   if ( angVel ) {
+      body.setAngularVelocity( new Ammo.btVector3( angVel.x, angVel.y, angVel.z ) );
+   }
+   
+   object.userData.physicsBody = body;
+   object.userData.collided = false;
+   scene.add( object );
+   
+   if ( mass > 0 ) {
+      arrows.push( object );
+      body.setActivationState( 4 ); // Disable deactivation
+   }
+   
+   physicsWorld.addRigidBody( body );
 
-	return body;
+   return body;
 }
 
 // Get a random value between given range.
 function getRandomFromRange(min, max) {
-	return Math.random() * (max - min) + min;
+   return Math.random() * (max - min) + min;
 }
 
 // Handle window resizing
-$(window).resize(function() 
-{
-	WIDTH = window.innerWidth;
-	HEIGHT = window.innerHeight;
-	
-	ASPECT_RATIO = WIDTH / HEIGHT;
-	
-	if (activeCam) {
-		activeCam.aspect = ASPECT_RATIO;
-		activeCam.updateProjectionMatrix();
-	}
+$(window).resize(function() {
+   
+   WIDTH = window.innerWidth;
+   HEIGHT = window.innerHeight;
+   
+   ASPECT_RATIO = WIDTH / HEIGHT;
+   
+   if (activeCam) {
+      activeCam.aspect = ASPECT_RATIO;
+      activeCam.updateProjectionMatrix();
+   }
 
-	if (renderer) {
-		renderer.setSize(WIDTH, HEIGHT);
-	}
+   if (renderer) {
+      renderer.setSize(WIDTH, HEIGHT);
+   }
 });
 
 </script>

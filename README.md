@@ -29,7 +29,7 @@ The simplest way of doing this, would be to use Python. Make sure you have Pytho
 user@computer:this-repo$python3 -m http.server 2222
 ```
 
-Then, open a web browser and go to [localhost:2222](localhost:2222  "localhost:2222") or whatever you set the port number to.
+Then, open a web browser and go to localhost:2222 or whatever you set the port number to.
 
 ## Reference List:
 
