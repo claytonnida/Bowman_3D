@@ -12,7 +12,7 @@ The phyics were used from another example of Threejs.org. The modifications of t
 
 ## Mouse Interaction: 
 
-I created three methods for using the mouse in the game. These are onDocumentMouseDown(), onDocumentMouseUp(), whileMouseDown(). Each of these functions were used in updating/saving the mouse coordinates that would later be used in all of our raycasting techniques. 
+I created four methods for using the mouse in the game. These are onDocumentMouseDown(), onDocumentMouseUp(), whileMouseDown(), onDocumentMouseMove(). Each of these functions were used in updating/saving the mouse coordinates that would later be used in all of our raycasting techniques. 
 
 It is also where I manipulate the arrow "gravity" to emulate the velocity and acceleration of an arrow based on the power of the player, where the power is increased the longer the player holds the mouse down, and the CSS updates accordingly. Furthermore, this is where the creation of an arrow is done. This is done by taking the raycaster direction of the mouse and the location of the players bow to create an arrow in that position/location with the "velocity" based on the power that has accumulated.
 
