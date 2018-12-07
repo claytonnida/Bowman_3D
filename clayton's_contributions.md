@@ -24,7 +24,6 @@ The way this is done is by saving the collision data and pulling the distance va
 
 I also implemented the code that happens after a collision has been detected. This mostly includes: updating the CSS health bars, win-con checking and creating/updating a blood-like particle system.
 
-
 ## Particle System:
 
 After collision has been detected I mentioned that a blood-like particle system is created. This is done by creating n number Vec3 positions passed into THREE.Points(). To emulate a particle system with THREE.Points(), I had to map a texture to each point giving it a round appearance and then blend it so that the alpha was transparent. I then created a function to update the positions of each of the points so that they seemed to move within my given range, giving the illusion that blood was gushing at the location of the arrow collision. The points texture will always face appear flat to any camera that is viewing them, this is what allows there to be so many without hindering the performance too greatly. There were also a number of helpful functions I was able to use in the PointsMaterial api that allowed me to give the particle system a more blood-like feel to it.
