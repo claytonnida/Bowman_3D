@@ -557,7 +557,7 @@ function doCollision(arrowClone) {
 			$('.hit2').css({width: '0',});
 			$('.bar2').css({width: barWidth + "%",});
 			}, 500);
-			
+
 		// Create a blood-like particle system at the area of contact.
 		createBloodParticleSystem(arrowClone);
 	}
@@ -578,6 +578,10 @@ function doCollision(arrowClone) {
 	}
 }
 
+/**
+* Create a blood-like particle system.
+* @Author Clayton Nida
+*/
 function createBloodParticleSystem(arrowClone)
 {
 	// Load the particle texture.
@@ -662,6 +666,10 @@ function switchSides() {
 	}
 }
 
+/**
+* Update mouse coordinates whenever the mouse moves.
+* @Author Clayton Nida (Derived from the three.js documentation)
+*/
 function onDocumentMouseMove(e) {
 	mouseCoords.set(
 		 ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
@@ -669,9 +677,13 @@ function onDocumentMouseMove(e) {
 	);
 }
 
+/**
+* Whenever mouse is clicked, reset values and call the whileMouseDown function.
+* @Author Clayton Nida
+*/
 function onDocumentMouseDown(e) {
 
-	// Reset the power and arrow speed.
+	// Reset the power and arrow speed, and update CSS.
 	pow = .1;
 	ARROW_SPEED = 1;
 	$('.power').css({width: 0+"%",});
@@ -683,39 +695,46 @@ function onDocumentMouseDown(e) {
 	}  
 }
 
+/**
+* While the mouse is being pressed increase the gravity of the arrow, and update the power bar.
+* @Author Clayton Nida
+*/
 function whileMouseDown() {
-
+	// Check which player is shooting. If player 2 we need to reverse how the power's z value is being scaled.
 	if(activeCam.position.z < 0) {
 		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))+ARROW_SPEED) );
 	} else {
 		physicsWorld.setGravity( new Ammo.btVector3( wind.x/(2*Math.PI), - GRAVITY/ARROW_SPEED*1.3, (wind.z/(2*Math.PI))-ARROW_SPEED) );
 	}
 	
-	// Grab CSS of the power bar.
+	// Grab CSS values of the power bar.
 	var value = $('.power-bar').data('value');
 	var total = $('.power-bar').data('total');
 	
-	// Update the value based on power.
+	// Update the values based on power.
     var newValue = pow;
 	pow += .035;
 	var barWidth = (newValue / total) * 100;
   
+	// Increase the arrow speed and power bars width.
 	if(pow * 100 < 100) {
-		var hitWidth = (pow) * 100 + "%";
-		// While holding mouse down, increase arrow power.
+		var powerWidth = (pow) * 100 + "%";
 		ARROW_SPEED += .6;
-	}
-    else {
-		var hitWidth = 100 + "%";
+	} else {
+		var powerWidth = 100 + "%";
 	}
     // Update the data of the CSS.
-	$('.power').css({width: hitWidth,});
+	$('.power').css({width: powerWidth,});
 	$('.power-bar').css({value: newValue,});
 
-	// Make the player's arm pull back on the string
+	// Make the player's arm pull back on the string.
 	animatePullBack();
 }
 
+/**
+* Once the mouse is un-clicked we create an arrow at the mouse coordinates.
+* @Author Clayton Nida
+*/
 function onDocumentMouseUp(e) {
 	if(mousedownID != -1) 
 	{  //Only stop if exists
@@ -723,38 +742,48 @@ function onDocumentMouseUp(e) {
 	  mousedownID = -1;
 	}
 	
-	var arrowMass = 1;
-	var arrowRadius = 2;
+	// Load/Create a new arrow at the mouse coordinates, and oriented by the raycaster.
 	loader = new THREE.PLYLoader();
-	loader.load( 'models/Arrow.ply', function ( geometry ) {
+	loader.load( 'models/Arrow.ply', function (geometry) {
+		var arrowMass = 1;
+		var arrowRadius = 2;
+
 		geometry.computeVertexNormals();
-		var material = new THREE.MeshStandardMaterial( { color: 0x130d06, flatShading: true } );
-		var arrowMesh = new THREE.Mesh( geometry, material );
+
+		var material = new THREE.MeshStandardMaterial({ color: 0x130d06, flatShading: true });
+		var arrowMesh = new THREE.Mesh(geometry, material);
+		
+		// This is the position the arrow is initially loaded, it will be positioned at the arrow coords next.
 		arrowMesh.position.y = 100;
 		arrowMesh.position.x = -100;
 		arrowMesh.position.z = 900;
-
+		
+		// Face arrow in the direction the camera is faceing.
 		arrowMesh.rotation = raycaster.ray.direction;
-		arrowMesh.scale.multiplyScalar( 10.0 );
+		arrowMesh.scale.multiplyScalar(10.0);
 		arrowMesh.scale.x = 4;
 		arrowMesh.castShadow = true;
 		arrowMesh.receiveShadow = true;
-		var arrowShape = new Ammo.btSphereShape( arrowRadius );
-		arrowShape.setMargin( margin );
+
+		var arrowShape = new Ammo.btSphereShape(arrowRadius);
+		arrowShape.setMargin(margin);
 		
-		pos.copy( raycaster.ray.direction );
-		pos.add( activePlayer.bow.getObjectByName("middle").getWorldPosition() );
-		
+		// Copy the direction and put the arrow at the bow's location with that direction.
+		pos.copy(raycaster.ray.direction);
+		pos.add(activePlayer.bow.getObjectByName("middle").getWorldPosition());
 		quat.set( 0, 0, 0, 1 );
-		
-		var arrowBody = createRigidBody( arrowMesh, arrowShape, arrowMass, pos, quat );
-		pos.copy( raycaster.ray.direction );
-		pos.multiplyScalar( 24 );
-		
-		arrowBody.setLinearVelocity( new Ammo.btVector3( pos.x, pos.y, pos.z ) );	
+
+		// Assign a rigid body to the arrows mesh, to allow it to be affected by physics.
+		var arrowBody = createRigidBody(arrowMesh, arrowShape, arrowMass, pos, quat);
+		pos.copy(raycaster.ray.direction);
+		pos.multiplyScalar(24);
+		arrowBody.setLinearVelocity(new Ammo.btVector3(pos.x, pos.y, pos.z));
+
+		// Reset the power bar.
 		$('.power').css({width: 0+"%",});
 		$('.power-bar').css({value: 0,});
 		
+		// Reset the pull back animation.
 		resetPullBack();
 	});
 }
@@ -793,7 +822,10 @@ function resetPullBack() {
 	activePlayer.rightElbow.rotation.set(0, 0, 0);
 	activePlayer.leftShoulderDummy.rotation.set(0, 0, -.6);
 }
-	
+/**
+* Create the rigid body of an object that will be used for physics.
+* Example code from threejs.org
+*/
 function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel ) 
 {
 	if (pos) {
@@ -846,6 +878,7 @@ function createRigidBody( object, physicsShape, mass, pos, quat, vel, angVel )
 	return body;
 }
 
+// Get a random value between given range.
 function getRandomFromRange(min, max) {
 	return Math.random() * (max - min) + min;
 }
