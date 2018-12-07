@@ -497,7 +497,7 @@ for (let index = 0; index < arrows.length; index++)
 
 				// Check that our collisionResults contains data, if so, pull the distance value of the data (this is the distance of the origin of the ray
 				// and the intersection) and compare it to the length of the directional vector, if it is less, then proceed.
-				// this is done to check that ray from the arrow's origin are intersection the cube. 
+				// this is done to check that ray from the arrow's origin are intersecting the cube. 
 				// See @https://stemkoski.github.io/Three.js/Collision-Detection.html and @https://threejs.org/docs/index.html#api/en/core/Raycaster for more information.
 				if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) 
 				{
@@ -600,19 +600,13 @@ function createBloodParticleSystem(arrowClone)
 					pY = getRandomFromRange(arrowClone.position.y - 10, arrowClone.position.y + 10),
 					pZ = getRandomFromRange(arrowClone.position.z - 10, arrowClone.position.z + 10),
 					particle = new THREE.Vector3(pX, pY, pZ);
-					particle.velocity = new THREE.Vector3(
-					0,				// x
-					-Math.random(),	// y
-					0);				// z
+					particle.velocity = new THREE.Vector3(0,-Math.random(),0);
 
 				particles.vertices.push(particle);
 			}
 
 			// Create a new particle system with the particles and material.
-			particleSystem = new THREE.Points(
-			particles,
-			pMaterial);
-			particleSystem.sortParticles = true;
+			particleSystem = new THREE.Points(particles, pMaterial);
 			particleSystem.name = "particleSys";
 
 			scene.add(particleSystem);

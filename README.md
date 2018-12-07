@@ -38,8 +38,19 @@ Then, open a web browser and go to [localhost:2222](localhost:2222  "localhost:2
 * IceCreamYou's Nemesis game - [Link to Github Page](https://github.com/IceCreamYou/Nemesis "Nemesis Github Page").
     - We used his THREE.FirstPersonControls class in an early build of our game. We decided on doing something different, but we still appreciate his work!
 * Bow 3D Model - [Link to Thingiverse Page](https://www.thingiverse.com/thing:2383635 "Bow by Giampanos on Thingiverse.com")
+* Arrow 3D Model - [Link to Thingiverse Page](https://www.thingiverse.com/thing:647535 "Arrow by LittleJohn16 on Thingiverse.com")
 * Weather Vane 3D Model - [Link to John Burkardt from The Department of Scientific Computing of Florida State University's page](https://people.sc.fsu.edu/~jburkardt/data/ply/ply.html "John Burkardt's page with PLY files")
-
+* Physics - https://threejs.org/examples/?q=break#webgl_physics_convex_break
+    - We used a modified version of this example to add physics to the arrows in our game.
+* Collision Detection - http://stemkoski.github.io/Three.js/
+    - We used the idea of the collision detection example from this page to get our own version of collision detection working.
+* Particle System - https://threejs.org/docs/index.html#api/en/objects/Points
+    - Using the api documentation, we were able to create the blood particle system for our game.
+* Skybox - https://threejs.org/examples/?q=env#webgl_materials_envmaps
+    - Used the skybox implementation of this example to create our own.
+* ThreeJS API documentation - https://threejs.org/docs/
+    - General other references for game mechanics.
+* CSS Bars - https://codepen.io/dwidomski/pen/KBzuo
 
 ### Thank you for taking a look at our project!
 
