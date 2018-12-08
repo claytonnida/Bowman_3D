@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+   <meta charset="UTF-8"> 
+
    <title>CS336 Final Project - 3D Bowman Game</title>
 
    <link rel="stylesheet" type="text/css" href="index_style.css">
@@ -18,7 +20,7 @@
 </body>
 
 <script>
-   
+
 // Game Constants.
 var WIDTH = window.innerWidth;
 var HEIGHT = window.innerHeight;
@@ -683,7 +685,7 @@ function switchSides() {
 * Update mouse coordinates whenever the mouse moves.
 * @Author Clayton Nida (Derived from the three.js documentation)
 */
-function onDocumentMouseMove(e) {
+function onDocumentMouseMove(event) {
    mouseCoords.set(
        ( event.clientX / window.innerWidth ) * 2 - 1, // Set Mouse x-coordinates
       -( event.clientY / window.innerHeight ) * 2 + 1 // Set Mouse y-coordinates
