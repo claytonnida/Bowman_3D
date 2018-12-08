@@ -1,3 +1,6 @@
 # Sublime text files
 *.sublime-project
 *.sublime-workspace
+
+# Files submitted for the class
+submission_extras/
